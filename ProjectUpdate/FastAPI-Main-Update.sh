@@ -3,12 +3,14 @@
 REPO_DIR="/data/FastAPI-Main"
 cd "$REPO_DIR" || exit 1
 
-echo "处理本地修改..."
-git stash -u  # 保存并丢弃所有本地修改（包括未跟踪文件）
-git clean -fd # 删除所有未跟踪的文件和目录
+# 完全重置仓库到干净状态
+echo "强制重置仓库状态..."
+git reset --hard HEAD
+git clean -f -d -x  # 删除所有未跟踪文件和目录（包括忽略的文件）
+git checkout -- .   # 丢弃所有修改
 
-# 获取更新
-echo "拉取最新代码..."
+# 强制获取最新代码
+echo "强制拉取最新代码..."
 git fetch origin
 git reset --hard origin/main
 
