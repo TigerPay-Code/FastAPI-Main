@@ -21,10 +21,36 @@ for dir in $changed_dirs; do
             echo "ProjectUpdate 目录有更新"
             chmod +x /data/FastAPI-Main/ProjectUpdate/FastAPI-Main-Update.sh
             ;;
-        order)
-            echo "order 目录有更新，重启 order.service"
-            sudo systemctl stop order.service
-            sudo systemctl start order.service
+        Nginx)
+            echo "Nginx 目录有更新，重启 Nginx"
+
+            if [ -f "$REPO_DIR/FastAPI-Main.conf" ]; then
+                echo "正在复制 FastAPI-Main.conf 到 Nginx 配置目录..."
+
+                # 复制配置文件
+                sudo cp "$REPO_DIR/FastAPI-Main.conf" /etc/nginx/sites-available/FastAPI-Main.conf
+
+                # 测试 Nginx 配置
+                echo "测试 Nginx 配置..."
+                if sudo nginx -t; then
+                    echo "Nginx 配置测试成功，重新加载 Nginx..."
+
+                    # 重新加载 Nginx
+                    sudo systemctl reload nginx
+
+                    # 重启 Nginx 以确保配置完全生效
+                    sudo systemctl restart nginx
+
+                    echo "Nginx 已成功重新加载并重启"
+                else
+                    echo "Nginx 配置测试失败，请检查配置文件"
+                    exit 1
+                fi
+            else
+                echo "错误：未找到 $REPO_DIR/FastAPI-Main.conf 文件"
+                exit 1
+            fi
+
             ;;
         *)
             echo "目录 $dir 更新，但没有对应的服务，跳过"
