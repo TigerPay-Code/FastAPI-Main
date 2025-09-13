@@ -1,6 +1,6 @@
 #!/bin/bash
 # 仓库路径
-REPO_DIR="/data/fastapi-main"
+REPO_DIR="/data/FastAPI-Main"
 cd "$REPO_DIR" || exit 1
 
 # 拉取最新代码
