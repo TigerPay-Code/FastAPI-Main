@@ -11,12 +11,12 @@
     notifempty
     sharedscripts
     postrotate
-        # 针对 pay-notify 服务
-        /usr/bin/systemctl reload pay-notify.service
+        # 针对 receive_notify 服务
+        /usr/bin/systemctl reload receive_notify.service
     endscript
 }
 
-/data/FastAPI-Main/ReceiveNotify/log/*.log {
+/data/FastAPI-Main/PayOrder/log/*.log {
     daily
     rotate 60
     compress
@@ -25,7 +25,7 @@
     notifempty
     sharedscripts
     postrotate
-        # 针对 pay-notify 服务
-        /usr/bin/systemctl reload pay-notify.service
+        # 针对 PayOrder 服务
+        /usr/bin/systemctl reload receive_notify.service
     endscript
 }

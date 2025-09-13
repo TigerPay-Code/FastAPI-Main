@@ -1,11 +1,42 @@
 [Unit]
 Description=FastAPI Receive Pay Notify Service
+
+# Requires：强制依赖（失败则本服务启动失败）
+# After：启动顺序依赖（失败则本服务启动失败）
+# Wants：启动顺序依赖（失败不影响本服务启动）
+# BindsTo：绑定依赖（失败不影响本服务启动）
+# PartOf：组成依赖（失败不影响本服务启动）
+# Conflicts：冲突依赖（本服务启动失败）
+# Requisite：先决条件依赖（本服务启动失败）
+# Recommends：推荐依赖（不影响本服务启动）
+# Before：启动前依赖（本服务启动失败则不启动依赖）
+# OnFailure：失败后依赖（本服务失败后启动依赖）
+# OnSuccess：成功后依赖（本服务成功后启动依赖）
+# OnFailureIsolate：失败隔离依赖（本服务失败后不影响依赖）
+# OnFailureJobMode：失败任务模式依赖（本服务失败后重启依赖）
+# OnFailureAction：失败动作依赖（本服务失败后执行动作）
+# OnFailureJobType：失败任务类型依赖（本服务失败后执行任务类型）
+# OnFailureJobTimeoutSec：失败任务超时依赖（本服务失败后任务超时）
+# OnFailureJobRestartSec：失败任务重启间隔依赖（本服务失败后任务重启间隔）
+# OnFailureJobFailureAction：失败任务失败动作依赖（本服务失败后任务失败动作）
+# OnFailureJobSuccessAction：失败任务成功动作依赖（本服务失败后任务成功动作）
+# OnFailureJobRebootArgument：失败任务重启参数依赖（本服务失败后任务重启参数）
+# OnFailureJobRebootSignal：失败任务重启信号依赖（本服务失败后任务重启信号）
+# OnFailureJobRebootExitStatus：失败任务重启退出状态依赖（本服务失败后任务重启退出状态）
+
 After=network-online.target mysql.service
 Requires=network-online.target mysql.service
 
 [Service]
+Type=simple
+
+# 运行用户
 User=root
+
+# 工作目录
 WorkingDirectory=/data/FastAPI-Main/ReceiveNotify
+
+# 环境变量
 Environment="PATH=/usr/local/bin"
 
 # 方案 A：直接使用 Uvicorn --workers CPU核心数 * 2 + 1
@@ -17,92 +48,11 @@ ExecStart=/usr/local/bin/uvicorn receive_notify:notify --host 127.0.0.1 --port 4
 StandardOutput=append:/data/FastAPI-Main/ReceiveNotify/log/notify.log
 StandardError=append:/data/FastAPI-Main/ReceiveNotify/log/notify-error.log
 
+# on-failure，那么即使脚本手动重启了服务，后续如果服务自身运行失败，systemd 仍然会自动重启它，提供了额外的稳定性保障。
 Restart=on-failure
 
-[Install]
-WantedBy=multi-user.target
-
-
-
-# =======================
-# Systemd Unit 配置文件
-# 服务名：receive-notify.service
-# 功能：在 Ubuntu 上以 systemd 管理方式运行 FastAPI/Uvicorn 应用
-# 特点：自动根据 CPU 和内存大小计算合理的 worker 数，避免 OOM 或 CPU 过载
-# =======================
-
-[Unit]
-# 服务的描述信息，会在 systemctl status 里显示
-Description=FastAPI Receive Notify Service
-
-# 在网络服务启动之后再启动本服务
-# 如果依赖 MySQL、Redis 等服务，也可以放在这里
-After=network.target mysql.service redis.service
-
-
-[Service]
-# 指定服务运行模式，simple 表示直接运行 ExecStart 里的命令
-Type=simple
-
-# 设置工作目录（代码所在路径），相对路径会基于这里解析
-WorkingDirectory=/data/FastAPI-Main/ReceiveNotify
-
-# -------------------------
-# ExecStart 是 systemd 启动服务时执行的命令
-# 这里我们用 bash -c 来写一个脚本，动态计算 worker 数
-# -------------------------
-ExecStart=/bin/bash -c '
-  # 要运行的 FastAPI 应用：模块名:实例名
-  APP="receive_notify:notify"
-  # 服务监听的地址和端口
-  HOST="127.0.0.1"
-  PORT="4911"
-
-  # -------------------------
-  # 自动计算 worker 数逻辑
-  # -------------------------
-
-  # 获取 CPU 核心数 (nproc 命令)
-  CPUS=$(nproc)
-
-  # 获取总内存（单位 MB）
-  # /proc/meminfo 里有 MemTotal，单位是 KB，转为 MB
-  MEM=$(grep MemTotal /proc/meminfo | awk "{print int($2/1024)}")
-
-  # 按 CPU 核心数计算初始 worker 数：CPU × 2 + 1
-  WORKERS=$((CPUS*2+1))
-
-  # 进一步根据内存情况限制 worker 数，避免 OOM
-  # 规则：
-  #   - 内存小于 2G 时，最多 2 个 worker
-  #   - 内存 2G ~ 4G 时，最多 3 个 worker
-  #   - 内存大于等于 4G 时，按 CPU 计算，但不超过 8 个
-  if [ $MEM -lt 2000 ]; then
-    WORKERS=2
-  elif [ $MEM -lt 4000 ]; then
-    WORKERS=3
-  elif [ $WORKERS -gt 8 ]; then
-    WORKERS=8
-  fi
-
-  # 打印启动信息（会显示在 journalctl 日志里，便于调试）
-  echo "Starting FastAPI app: $APP with $WORKERS workers (CPU=$CPUS, MEM=${MEM}MB)"
-
-  # 真正启动 uvicorn 服务
-  # --loop uvloop   使用更高性能的事件循环
-  # --workers N     根据上面计算的结果指定进程数
-  exec /usr/local/bin/uvicorn $APP --host $HOST --port $PORT --workers $WORKERS --loop uvloop
-'
-
-# 如果服务崩溃退出，systemd 会自动重启
-Restart=always
-
 # 重启间隔（秒）
-RestartSec=5
-
-# 打开文件描述符限制（适合高并发场景，默认可能只有 1024）
-LimitNOFILE=65535
+RestartSec=30
 
 [Install]
-# 表示本服务在多用户模式下自动启动
 WantedBy=multi-user.target
