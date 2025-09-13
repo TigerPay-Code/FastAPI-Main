@@ -3,11 +3,14 @@
 REPO_DIR="/data/FastAPI-Main"
 cd "$REPO_DIR" || exit 1
 
-# 拉取最新代码
-git reset --hard HEAD
+echo "处理本地修改..."
+git stash -u  # 保存并丢弃所有本地修改（包括未跟踪文件）
+git clean -fd # 删除所有未跟踪的文件和目录
+
+# 获取更新
+echo "拉取最新代码..."
 git fetch origin
 git reset --hard origin/main
-git pull origin main
 
 # 获取最近一次更新的目录列表
 changed_dirs=$(git diff --name-only HEAD~1 HEAD | cut -d'/' -f1 | sort -u)
