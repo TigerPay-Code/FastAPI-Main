@@ -12,10 +12,14 @@ changed_dirs=$(git diff --name-only HEAD~1 HEAD | cut -d'/' -f1 | sort -u)
 
 for dir in $changed_dirs; do
     case $dir in
-        notify)
-            echo "notify 目录有更新，重启 notify.service"
-            sudo systemctl stop notify.service
-            sudo systemctl start notify.service
+        ReceiveNotify)
+            echo "ReceiveNotify 目录有更新，重启 notify.service"
+            sudo systemctl stop receive-notify.service
+            sudo systemctl start receive-notify.service
+            ;;
+        ProjectUpdate)
+            echo "ProjectUpdate 目录有更新"
+            chmod +x /data/FastAPI-Main/ProjectUpdate/FastAPI-Main-Update.sh
             ;;
         order)
             echo "order 目录有更新，重启 order.service"
@@ -27,6 +31,3 @@ for dir in $changed_dirs; do
             ;;
     esac
 done
-
-# chmod +x /data/FastAPI-Main/ProjectUpdate/FastAPI-Main-Update.sh
-# ./FastAPI-Main-Update.sh
