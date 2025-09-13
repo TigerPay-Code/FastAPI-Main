@@ -4,10 +4,10 @@ REPO_DIR="/data/FastAPI-Main"
 cd "$REPO_DIR" || exit 1
 
 # 拉取最新代码
-echo "处理本地修改..."
 git reset --hard HEAD
 git fetch origin
 git reset --hard origin/main
+git pull origin main
 
 # 获取最近一次更新的目录列表
 changed_dirs=$(git diff --name-only HEAD~1 HEAD | cut -d'/' -f1 | sort -u)
