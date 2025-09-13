@@ -57,7 +57,6 @@ for dir in $changed_dirs; do
                 echo "错误：未找到 $REPO_DIR/FastAPI-Main.conf 文件"
                 exit 1
             fi
-
             ;;
         *)
             echo "目录 $dir 更新，但没有对应的服务，跳过"
