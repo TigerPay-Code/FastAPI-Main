@@ -15,17 +15,3 @@
         /usr/bin/systemctl reload receive_notify.service
     endscript
 }
-
-/data/FastAPI-Main/PayOrder/log/*.log {
-    daily
-    rotate 60
-    compress
-    dateext
-    missingok
-    notifempty
-    sharedscripts
-    postrotate
-        # 针对 PayOrder 服务
-        /usr/bin/systemctl reload receive_notify.service
-    endscript
-}

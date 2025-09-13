@@ -24,8 +24,10 @@ Description=FastAPI Receive Pay Notify Service
 # OnFailureJobRebootSignal：失败任务重启信号依赖（本服务失败后任务重启信号）
 # OnFailureJobRebootExitStatus：失败任务重启退出状态依赖（本服务失败后任务重启退出状态）
 
-After=network-online.target mysql.service
-Requires=network-online.target mysql.service
+# After=network-online.target mysql.service
+# Requires=network-online.target mysql.service
+
+After=network.target
 
 [Service]
 Type=simple

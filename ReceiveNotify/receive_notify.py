@@ -110,7 +110,7 @@ sudo systemctl restart nginx
 sudo systemctl enable nginx
 
 
-sudo vim /etc/systemd/system/pay-notify.service
+sudo vim /etc/systemd/system/receive-notify.service
 -----------------------------------------------------------------------------------------------------------------
 [Unit]
 Description=Pay Receive Notify
@@ -136,17 +136,17 @@ Restart=on-failure
 WantedBy=multi-user.target
 -----------------------------------------------------------------------------------------------------------------
 sudo systemctl daemon-reload
-sudo systemctl enable pay-notify.service
-sudo systemctl restart pay-notify.service
-sudo systemctl start pay-notify.service
-sudo systemctl stop pay-notify.service
-sudo systemctl status pay-notify.service
-sudo tail -f /data/notify/log/notify.log
+sudo systemctl enable receive-notify.service
+sudo systemctl restart receive-notify.service
+sudo systemctl start receive-notify.service
+sudo systemctl stop receive-notify.service
+sudo systemctl status receive-notify.service
+sudo tail -f /data/FastAPI-Main/ReceiveNotify/log/notify.log
 
 日志管理 2个月删除
-sudo vim /etc/logrotate.d/pay-notify
+sudo vim /etc/logrotate.d/fastapi-main
 -----------------------------------------------------------------------------------------------------------------
-/data/notify/log/*.log {
+/data/FastAPI-Main/ReceiveNotify/log/*.log {
     daily
     rotate 60
     compress
@@ -155,13 +155,14 @@ sudo vim /etc/logrotate.d/pay-notify
     notifempty
     sharedscripts
     postrotate
-        # 向 Uvicorn 进程发送 SIGHUP 信号，通知其重新打开日志文件
-        /usr/bin/killall -HUP uvicorn
+        # 针对 receive_notify 服务
+        /usr/bin/systemctl reload receive_notify.service
     endscript
 }
 -----------------------------------------------------------------------------------------------------------------
 验证日志管理
-sudo logrotate -d /etc/logrotate.d/pay-notify
+sudo logrotate -d /etc/logrotate.d/fastapi-main
+sudo logrotate -vf /etc/logrotate.d/fastapi-main
 """
 
 notify = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
