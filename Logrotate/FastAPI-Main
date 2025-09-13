@@ -16,7 +16,7 @@
     endscript
 }
 
-/data/pay-order/log/*.log {
+/data/FastAPI-Main/ReceiveNotify/log/*.log {
     daily
     rotate 60
     compress
@@ -25,21 +25,7 @@
     notifempty
     sharedscripts
     postrotate
-        # 针对 pay-order 服务
-        /usr/bin/systemctl reload pay-order.service
-    endscript
-}
-
-/data/main-api/log/*.log {
-    daily
-    rotate 60
-    compress
-    dateext
-    missingok
-    notifempty
-    sharedscripts
-    postrotate
-        # 针对 main-api 服务
-        /usr/bin/systemctl reload main-api.service
+        # 针对 pay-notify 服务
+        /usr/bin/systemctl reload pay-notify.service
     endscript
 }

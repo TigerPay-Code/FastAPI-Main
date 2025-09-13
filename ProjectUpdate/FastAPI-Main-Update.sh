@@ -28,5 +28,5 @@ for dir in $changed_dirs; do
     esac
 done
 
-# chmod +x /data/fastapi-main/fastapi-update.sh
-# ./fastapi-update.sh
+# chmod +x /data/FastAPI-Main/ProjectUpdate/FastAPI-Main-Update.sh
+# ./FastAPI-Main-Update.sh
