@@ -1,0 +1,50 @@
+sudo vim /etc/logrotate.d/pay-notify
+-----------------------------------------------------------------------------------------------------------------
+/data/notify/log/*.log {
+    daily
+    rotate 60
+    compress
+    dateext
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        # 向 Uvicorn 进程发送 SIGHUP 信号，通知其重新打开日志文件
+        /usr/bin/systemctl reload receive-notify.service
+    endscript
+}
+-----------------------------------------------------------------------------------------------------------------
+验证日志管理
+sudo logrotate -d /etc/logrotate.d/pay-notify
+
+
+
+/data/notify/log/*.log: 这指定了 logrotate 要处理的日志文件路径。* 是通配符，表示该目录下的所有 .log 文件。
+
+daily: 这表示日志文件会 每天 进行轮换。
+
+rotate 60: 这指定了最多保留 60个 轮换后的旧日志文件。当第61个日志文件生成时，最旧的那个（第1个）会被删除。
+
+compress: 这表示日志轮换后，旧的日志文件会被 压缩（通常是使用 gzip），以节省磁盘空间。
+
+dateext: 这是个非常有用的选项，它会给轮换后的日志文件加上 日期后缀，例如 app.log-20250912.gz。这比默认的数字后缀（如 app.log.1.gz）更直观，也更方便查找特定日期的日志。
+
+missingok: 如果指定的日志文件不存在，logrotate 不会报错，而是会 静默跳过。
+
+notifempty: 如果日志文件是空的，不进行 轮换。
+
+sharedscripts: 这个选项非常重要。它确保了在处理多个日志文件时，postrotate 脚本只在所有日志文件都轮换完成后 运行一次，而不是每个文件轮换一次就运行一次。
+
+postrotate...endscript: 这定义了一个在日志轮换完成之后执行的脚本。
+
+# 向 Uvicorn 进程发送 SIGHUP 信号，通知其重新打开日志文件: 这是脚本中的注释，解释了下面的命令作用。
+
+/usr/bin/killall -HUP uvicorn: 这是核心命令。killall 命令用于根据进程名杀死或发送信号给所有匹配的进程。
+
+-HUP: 这是 SIGHUP 信号，全称是 "Hang Up"。对于许多守护进程（如 Web 服务器、日志服务等），接收到 SIGHUP 信号后，它们不会终止，而是会 重新加载配置或重新打开日志文件。
+
+uvicorn: 这指定了目标进程名。这条命令会找到所有名为 uvicorn 的进程，并向它们发送 SIGHUP 信号。这通常用于通知 Uvicorn 应用，日志文件已经被轮换了，请重新打开并写入新的日志文件，而不是继续写入旧的、已经被压缩和重命名的文件。
+
+
+如果有问题 重新启动一下 cron
+sudo systemctl restart cron

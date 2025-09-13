@@ -1,0 +1,22 @@
+[Unit]
+Description=Pay Receive Notify
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/data/notify
+Environment="PATH=/usr/local/bin"
+
+# 方案 A：直接使用 Uvicorn --workers CPU核心数 * 2 + 1
+ExecStart=/usr/local/bin/uvicorn receive_notify:notify --host 127.0.0.1 --port 4911 --workers 1 --loop uvloop
+
+# 方案 B：Gunicorn + Uvicorn Worker（注释掉方案 A 并取消下行注释） pip install gunicorn "uvicorn[standard]"
+#ExecStart=/data/notify/venv/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 5 app.receive_notify:app --bind 127.0.0.1:4911
+
+StandardOutput=file:/data/notify/log/notify.log
+StandardError=file:/data/notify/log/notify-error.log
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

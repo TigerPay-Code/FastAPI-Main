@@ -1,0 +1,45 @@
+#
+# Logrotate 配置，用于管理所有 FastAPI 服务的日志
+#
+
+/data/FastAPI-Main/ReceiveNotify/log/*.log {
+    daily
+    rotate 60
+    compress
+    dateext
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        # 针对 pay-notify 服务
+        /usr/bin/systemctl reload pay-notify.service
+    endscript
+}
+
+/data/pay-order/log/*.log {
+    daily
+    rotate 60
+    compress
+    dateext
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        # 针对 pay-order 服务
+        /usr/bin/systemctl reload pay-order.service
+    endscript
+}
+
+/data/main-api/log/*.log {
+    daily
+    rotate 60
+    compress
+    dateext
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        # 针对 main-api 服务
+        /usr/bin/systemctl reload main-api.service
+    endscript
+}

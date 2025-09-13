@@ -1,0 +1,11 @@
+1、放置配置文件：将这个文件放置在 Nginx 配置目录中。通常，这个目录是 /etc/nginx/conf.d/ 或 /etc/nginx/sites-available/。
+2、主配置文件中包含 (include)：确保你的主 Nginx 配置文件 (/etc/nginx/nginx.conf) 中有类似 include /etc/nginx/conf.d/*.conf; 的行，这样 Nginx 启动时会自动加载该目录下的所有 .conf 文件。
+3、创建软链接（如果使用 sites-available）：如果你将文件放在 sites-available 目录，需要创建一个软链接到 sites-enabled 目录来启用它。
+	sudo ln -s /etc/nginx/sites-available/FastAPI-Main.conf /etc/nginx/sites-enabled/
+4、检查配置语法：在重新加载或重启 Nginx 前，务必检查配置语法是否正确。
+	sudo nginx -t
+5、重新加载或重启 Nginx：
+	sudo systemctl reload nginx
+	# 或者
+	sudo systemctl restart nginx
+
