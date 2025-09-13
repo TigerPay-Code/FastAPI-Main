@@ -20,16 +20,16 @@ changed_dirs=$(git diff --name-only HEAD~1 HEAD | cut -d'/' -f1 | sort -u)
 for dir in $changed_dirs; do
     case $dir in
         ReceiveNotify)
-            echo "ReceiveNotify 目录有更新，重启 notify.service"
+            echo "$dir 目录有更新，重启 notify.service"
             sudo systemctl stop receive-notify.service
             sudo systemctl start receive-notify.service
             ;;
         ProjectUpdate)
-            echo "ProjectUpdate 目录有更新"
+            echo "$dir 目录有更新"
             chmod +x /data/FastAPI-Main/ProjectUpdate/FastAPI-Main-Update.sh
             ;;
         Nginx)
-            echo "Nginx 目录有更新，重启 Nginx"
+            echo "$dir 目录有更新，重启 Nginx"
 
             if [ -f "$REPO_DIR/FastAPI-Main.conf" ]; then
                 echo "正在复制 FastAPI-Main.conf 到 Nginx 配置目录..."
@@ -57,6 +57,9 @@ for dir in $changed_dirs; do
                 echo "错误：未找到 $REPO_DIR/FastAPI-Main.conf 文件"
                 exit 1
             fi
+            ;;
+        Systemctl)
+            echo "$dir 目录有更新"
             ;;
         *)
             echo "目录 $dir 更新，但没有对应的服务，跳过"
