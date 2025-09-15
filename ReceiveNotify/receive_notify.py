@@ -10,6 +10,9 @@ logger = setup_logger(log_name)
 logger.info("打印日志信息")
 logger.debug("打印调试信息")
 logger.error("打印错误信息")
+''''
+sudo tail -f /data/FastAPI-Main/logS/ReceiveNotify.log
+'''
 
 notify = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
