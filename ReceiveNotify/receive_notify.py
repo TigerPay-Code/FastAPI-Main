@@ -9,7 +9,9 @@ notify = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
 
-rn_log = setup_logger(os.path.basename(os.path.dirname(os.path.abspath(__file__))))
+log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
+print(log_name)
+rn_log = setup_logger(log_name)
 
 class Notify_In_Data(BaseModel):
     state: int = Field(
