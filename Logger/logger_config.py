@@ -12,12 +12,6 @@ LOGS_DIR = os.path.join(PROJECT_ROOT, "logs")
 # exist_ok=True 表示如果目录已存在，则不会抛出异常
 os.makedirs(LOGS_DIR, exist_ok=True)
 
-# 获取当前文件所在的子目录名称（例如：ReceiveNotify）
-current_dir_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
-
-# 动态生成日志文件路径，并将其放入 logs 目录
-LOG_FILE_PATH = os.path.join(LOGS_DIR, f"{current_dir_name}.log")
-
 # 定义日志格式
 LOG_FORMAT = "%(asctime)s %(levelname)s [%(process)d] - %(name)s - %(message)s"
 
@@ -30,7 +24,7 @@ def setup_logger(logger_name: str = None):
     app_logger.setLevel(logging.INFO)
 
     file_handler = RotatingFileHandler(
-        LOG_FILE_PATH,
+        os.path.join(LOGS_DIR, f"{logger_name}.log"),
         maxBytes=10 * 1024 * 1024,
         backupCount=5,
         encoding="utf-8"

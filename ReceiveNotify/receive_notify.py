@@ -11,7 +11,7 @@ ok = Response(content="ok", media_type="text/plain")
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 print(log_name)
-rn_log = setup_logger(log_name)
+rn_log = setup_logger('ReceiveNotify')
 
 class Notify_In_Data(BaseModel):
     state: int = Field(

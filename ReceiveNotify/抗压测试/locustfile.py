@@ -17,7 +17,7 @@ ROUTES = [
 ]
 
 # 并发线程数
-NUM_THREADS = 200
+NUM_THREADS = 1
 
 # 用于统计结果的全局变量，使用锁来确保线程安全
 success_count = 0
