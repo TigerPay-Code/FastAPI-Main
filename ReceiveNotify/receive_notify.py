@@ -17,10 +17,10 @@ class Notify_In_Data(BaseModel):
         description="1 表示成功",
         default=0
     )
-    sysOrderNo: str = Field(..., min_length=4, max_length=36, description="系统订单号")
-    mchOrderNo: str = Field(..., min_length=4, max_length=36, description="商户订单号")
+    sysOrderNo: str = Field(..., min_length=4, max_length=36, title="平台订单号", description="系统订单号")
+    mchOrderNo: str = Field(..., min_length=4, max_length=36, title="下游订单号", description="商户订单号")
     amount: int = Field(..., description="金额，单位分")
-    sign: str
+    sign: str = Field(..., min_length=32, max_length=32, title="签名", description="签名值大写的MD5值")
 
 
 class Notify_Out_Data(BaseModel):
