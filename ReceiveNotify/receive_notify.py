@@ -17,6 +17,7 @@ rn_log.info("打印日志信息")
 rn_log.debug("打印调试信息")
 rn_log.error("打印错误信息")
 
+
 class Notify_In_Data(BaseModel):
     state: int = Field(
         title="通知状态",
