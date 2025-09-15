@@ -24,8 +24,8 @@ Environment="PATH=/usr/local/bin"
 # 方案 B：Gunicorn + Uvicorn Worker（注释掉方案 A 并取消下行注释） pip3 install gunicorn "uvicorn[standard]"
 ExecStart=/usr/local/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 1 ReceiveNotify.receive_notify:notify --bind 127.0.0.1:4911
 
-# StandardOutput=append:/data/FastAPI-Main/ReceiveNotify/log/notify.log
-# StandardError=append:/data/FastAPI-Main/ReceiveNotify/log/notify-error.log
+StandardOutput=append:/data/FastAPI-Main/logs/ReceiveNotify.log
+StandardError=append:/data/FastAPI-Main/logs/ReceiveNotifyError.log
 
 # on-failure，那么即使脚本手动重启了服务，后续如果服务自身运行失败，systemd 仍然会自动重启它，提供了额外的稳定性保障。
 Restart=on-failure
