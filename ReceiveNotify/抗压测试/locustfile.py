@@ -18,7 +18,7 @@ ROUTES = [
 ]
 
 # 并发线程数
-NUM_THREADS = 500
+NUM_THREADS = 300
 
 # 用于统计结果的全局变量，使用锁来确保线程安全
 success_count = 0
@@ -56,7 +56,7 @@ def send_request():
         if response.status_code == 200:
             with lock:
                 success_count += 1
-            print(f"请求 {route} 成功！状态码：{response.status_code}")
+            print(f"请求 {route} 成功！状态码：{response.status_code}, 响应内容：{response.text}")
         else:
             with lock:
                 failure_count += 1

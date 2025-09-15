@@ -5,7 +5,7 @@
 目录说明
 - Config：配置模块
 - Database：数据库模块
-- Loggers：日志模块
+- Logger：日志模块
 - Logrotate：日志轮转配置文件
 - Nginx：Nginx 配置文件
 - ProjectUpdate：项目更新脚本
@@ -79,6 +79,12 @@ venv\Scripts\activate
 
 # 启动项目
 uvicorn ReceiveNotify.receive_notify:notify --host 127.0.0.1 --port 4911 --workers 1
+
+# 启动调试模式
+uvicorn ReceiveNotify.receive_notify:notify --host 127.0.0.1 --port 4911 --workers 1 --reload
+
+# 退出虚拟环境
+deactivate
 ```
 
 
