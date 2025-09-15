@@ -19,7 +19,7 @@ WorkingDirectory=/data/FastAPI-Main
 Environment="PATH=/usr/local/bin"
 
 # 方案 A：直接使用 Uvicorn --workers CPU核心数 * 2 + 1
-# ExecStart=/usr/local/bin/uvicorn ReceiveNotifyreceive_notify:notify --host 127.0.0.1 --port 4911 --workers 1 --loop uvloop
+# ExecStart=/usr/local/bin/uvicorn ReceiveNotify.receive_notify:notify --host 127.0.0.1 --port 4911 --workers 1 --loop uvloop
 
 # 方案 B：Gunicorn + Uvicorn Worker（注释掉方案 A 并取消下行注释） pip3 install gunicorn "uvicorn[standard]"
 ExecStart=/usr/local/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 1 ReceiveNotify.receive_notify:notify --bind 127.0.0.1:4911

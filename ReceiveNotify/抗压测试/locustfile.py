@@ -7,7 +7,8 @@ import json
 import random
 
 # 要测试的 API 主机地址
-API_HOST = "https://notify.king-sms.com"
+# API_HOST = "https://notify.king-sms.com"
+API_HOST = "http://127.0.0.1:4911"
 
 # 要测试的所有路由列表
 ROUTES = [
@@ -17,7 +18,7 @@ ROUTES = [
 ]
 
 # 并发线程数
-NUM_THREADS = 300
+NUM_THREADS = 500
 
 # 用于统计结果的全局变量，使用锁来确保线程安全
 success_count = 0
