@@ -10,8 +10,12 @@ success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
-print(log_name)
-rn_log = setup_logger('ReceiveNotify')
+
+rn_log = setup_logger(log_name)
+
+rn_log.info("打印日志信息")
+rn_log.debug("打印调试信息")
+rn_log.error("打印错误信息")
 
 class Notify_In_Data(BaseModel):
     state: int = Field(
@@ -48,7 +52,6 @@ async def handle_global_pay_notify(notify_in_data: Notify_In_Data):
         rn_log.info(f"订单号: {notify_in_data.sysOrderNo} 已成功支付，金额: {notify_in_data.amount}")
     else:
         rn_log.error(f"订单号: {notify_in_data.sysOrderNo} 支付失败，金额: {notify_in_data.amount}")
-
     return success
 
 
