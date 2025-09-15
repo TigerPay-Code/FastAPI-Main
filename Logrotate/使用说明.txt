@@ -1,25 +1,23 @@
-sudo vim /etc/logrotate.d/pay-notify
+sudo vim /etc/logrotate.d/fastapi-main
 -----------------------------------------------------------------------------------------------------------------
-/data/notify/log/*.log {
+/data/FastAPI-Main/ReceiveNotify/log/*.log {
     daily
-    rotate 7
+    rotate 60
     compress
     dateext
     missingok
     notifempty
     sharedscripts
     postrotate
-        # 向 Uvicorn 进程发送 SIGHUP 信号，通知其重新打开日志文件
-        /usr/bin/systemctl restart receive-notify.service
+        # 针对 receive_notify 服务
+        /usr/bin/systemctl restart receive_notify.service
     endscript
 }
 -----------------------------------------------------------------------------------------------------------------
 验证日志管理
 sudo logrotate -d /etc/logrotate.d/fastapi-main
 
-
-
-/data/notify/log/*.log: 这指定了 logrotate 要处理的日志文件路径。* 是通配符，表示该目录下的所有 .log 文件。
+/data/FastAPI-Main/log/*.log: 这指定了 logrotate 要处理的日志文件路径。* 是通配符，表示该目录下的所有 .log 文件。
 
 daily: 这表示日志文件会 每天 进行轮换。
 

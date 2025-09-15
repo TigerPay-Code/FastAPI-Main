@@ -22,11 +22,11 @@ LOG_FILE_PATH = os.path.join(LOGS_DIR, f"{current_dir_name}.log")
 LOG_FORMAT = "%(asctime)s %(levelname)s [%(process)d] - %(name)s - %(message)s"
 
 
-def setup_logger():
+def setup_logger(logger_name: str = None):
     """
     配置并返回一个专用于应用程序的日志记录器。
     """
-    app_logger = logging.getLogger(current_dir_name) # 可以用目录名作为logger的名称
+    app_logger = logging.getLogger(logger_name)  # 可以用目录名作为logger的名称
     app_logger.setLevel(logging.INFO)
 
     file_handler = RotatingFileHandler(
@@ -43,7 +43,3 @@ def setup_logger():
         app_logger.addHandler(file_handler)
 
     return app_logger
-
-
-# 导出全局可用的日志对象
-logger = setup_logger()

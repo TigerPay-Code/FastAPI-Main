@@ -1,7 +1,3 @@
-#
-# Logrotate 配置，用于管理所有 FastAPI 服务的日志
-#
-
 /data/FastAPI-Main/ReceiveNotify/log/*.log {
     daily
     rotate 60
