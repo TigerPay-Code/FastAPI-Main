@@ -7,13 +7,16 @@ from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
+
 logger.debug("打印调试信息")
 logger.info("打印日志信息")
 logger.warn("打印警告信息")
-logger.warning("打印警告信息")
+
 logger.error("打印错误信息")
-logger.critical("打印严重错误信息")
 logger.exception("打印异常信息")
+
+logger.critical("打印严重错误信息")
+
 ''''
 sudo tail -f /data/FastAPI-Main/logS/ReceiveNotify.log
 '''
