@@ -3,7 +3,7 @@
 #launch.json folder
 
 .idea/
-
+venv/
 .vscode/
 #Cache folder
 .alcache/
