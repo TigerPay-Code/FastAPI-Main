@@ -3,22 +3,30 @@
 ## 1. 项目简介
 
 目录说明
-
-- Systemctl：systemd 服务配置文件
+- Config：配置模块
+- Database：数据库模块
+- Loggers：日志模块
 - Logrotate：日志轮转配置文件
-- PayOrder：支付订单模块
+- Nginx：Nginx 配置文件
+- ProjectUpdate：项目更新脚本
 - ReceiveNotify：接收支付通知模块
-- Utils：工具模块
-- app.py：项目入口文件
-- config.py：项目配置文件
+- Redis：Redis 模块
+- Routers：路由模块
+- static：静态文件
+- Systemctl：systemd 服务配置文件
+- Templates：模板文件
 - requirements.txt：项目依赖文件
 - README.md：项目说明文件
 
 ## 2. 项目结构
 
 ```
-.
-├── PayOrder
+├── Config
+│   ├── __init__.py
+│   ├── config.ini------------------# 配置文件
+│   ├── config-initialize.py--------# 配置初始化脚本
+│   └── mconfig_loader.py-----------# 配置加载器
+├── Database
 │   ├── __init__.py
 │   ├── api.py
 │   ├── config.py
@@ -26,13 +34,6 @@
 │   ├── routers.py
 │   └── utils.py
 ├── ReceiveNotify
-│   ├── __init__.py
-│   ├── api.py
-│   ├── config.py
-│   ├── models.py
-│   ├── routers.py
-│   └── utils.py
-├── Utils
 │   ├── __init__.py
 │   ├── config.py
 │   ├── models.py

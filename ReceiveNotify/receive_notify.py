@@ -29,13 +29,13 @@ ok = Response(content="ok", media_type="text/plain")
 
 class Notify_In_Data(BaseModel):
     state: int = Field(
-        title="通知状态",
-        description="1 表示成功",
+        title="支付状态",
+        description="0-订单生成,1-支付中,2-支付成功,3-支付失败",
         default=0
     )
     sysOrderNo: str = Field(..., min_length=4, max_length=36, title="平台订单号", description="系统订单号")
     mchOrderNo: str = Field(..., min_length=4, max_length=36, title="下游订单号", description="商户订单号")
-    amount: int = Field(..., description="金额，单位分")
+    amount: int = Field(..., title="金额", description="单位分")
     sign: str = Field(..., min_length=32, max_length=32, title="签名", description="签名值大写的MD5值")
 
 
