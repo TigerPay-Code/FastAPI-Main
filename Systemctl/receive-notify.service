@@ -1,29 +1,6 @@
 [Unit]
 Description=FastAPI Receive Pay Notify Service
 
-# Requires：强制依赖（失败则本服务启动失败）
-# After：启动顺序依赖（失败则本服务启动失败）
-# Wants：启动顺序依赖（失败不影响本服务启动）
-# BindsTo：绑定依赖（失败不影响本服务启动）
-# PartOf：组成依赖（失败不影响本服务启动）
-# Conflicts：冲突依赖（本服务启动失败）
-# Requisite：先决条件依赖（本服务启动失败）
-# Recommends：推荐依赖（不影响本服务启动）
-# Before：启动前依赖（本服务启动失败则不启动依赖）
-# OnFailure：失败后依赖（本服务失败后启动依赖）
-# OnSuccess：成功后依赖（本服务成功后启动依赖）
-# OnFailureIsolate：失败隔离依赖（本服务失败后不影响依赖）
-# OnFailureJobMode：失败任务模式依赖（本服务失败后重启依赖）
-# OnFailureAction：失败动作依赖（本服务失败后执行动作）
-# OnFailureJobType：失败任务类型依赖（本服务失败后执行任务类型）
-# OnFailureJobTimeoutSec：失败任务超时依赖（本服务失败后任务超时）
-# OnFailureJobRestartSec：失败任务重启间隔依赖（本服务失败后任务重启间隔）
-# OnFailureJobFailureAction：失败任务失败动作依赖（本服务失败后任务失败动作）
-# OnFailureJobSuccessAction：失败任务成功动作依赖（本服务失败后任务成功动作）
-# OnFailureJobRebootArgument：失败任务重启参数依赖（本服务失败后任务重启参数）
-# OnFailureJobRebootSignal：失败任务重启信号依赖（本服务失败后任务重启信号）
-# OnFailureJobRebootExitStatus：失败任务重启退出状态依赖（本服务失败后任务重启退出状态）
-
 # After=network-online.target mysql.service
 # Requires=network-online.target mysql.service
 
@@ -44,8 +21,8 @@ Environment="PATH=/usr/local/bin"
 # 方案 A：直接使用 Uvicorn --workers CPU核心数 * 2 + 1
 ExecStart=/usr/local/bin/uvicorn receive_notify:notify --host 127.0.0.1 --port 4911 --workers 1 --loop uvloop
 
-# 方案 B：Gunicorn + Uvicorn Worker（注释掉方案 A 并取消下行注释） pip install gunicorn "uvicorn[standard]"
-#ExecStart=/data/notify/venv/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 5 app.receive_notify:app --bind 127.0.0.1:4911
+# 方案 B：Gunicorn + Uvicorn Worker（注释掉方案 A 并取消下行注释） pip3 install gunicorn "uvicorn[standard]"
+ExecStart=/usr/local/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 1 receive_notify:notify --bind 127.0.0.1:4911
 
 StandardOutput=append:/data/FastAPI-Main/ReceiveNotify/log/notify.log
 StandardError=append:/data/FastAPI-Main/ReceiveNotify/log/notify-error.log
@@ -54,7 +31,7 @@ StandardError=append:/data/FastAPI-Main/ReceiveNotify/log/notify-error.log
 Restart=on-failure
 
 # 重启间隔（秒）
-RestartSec=30
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target

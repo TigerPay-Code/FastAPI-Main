@@ -12,6 +12,6 @@
     sharedscripts
     postrotate
         # 针对 receive_notify 服务
-        /usr/bin/systemctl reload receive_notify.service
+        /usr/bin/systemctl restart receive_notify.service
     endscript
 }

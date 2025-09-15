@@ -2,7 +2,7 @@ sudo vim /etc/logrotate.d/pay-notify
 -----------------------------------------------------------------------------------------------------------------
 /data/notify/log/*.log {
     daily
-    rotate 60
+    rotate 7
     compress
     dateext
     missingok
@@ -10,12 +10,12 @@ sudo vim /etc/logrotate.d/pay-notify
     sharedscripts
     postrotate
         # 向 Uvicorn 进程发送 SIGHUP 信号，通知其重新打开日志文件
-        /usr/bin/systemctl reload receive-notify.service
+        /usr/bin/systemctl restart receive-notify.service
     endscript
 }
 -----------------------------------------------------------------------------------------------------------------
 验证日志管理
-sudo logrotate -d /etc/logrotate.d/pay-notify
+sudo logrotate -d /etc/logrotate.d/fastapi-main
 
 
 
