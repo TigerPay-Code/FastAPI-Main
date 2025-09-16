@@ -6,27 +6,17 @@
 # @IDE       : PyCharm
 # @Function  : 接收支付通知 （global_pay_in_notify 代收通知，global_pay_out_notify 代付通知，global_refund_notify 退款通知）
 import os
-
 from fastapi import FastAPI, Response
-from contextlib import asynccontextmanager
-from typing import AsyncContextManager, Any, AsyncGenerator
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
-
-@asynccontextmanager
-async def lifespan_manager() -> AsyncContextManager[None]:  # 添加类型提示
-    """生命周期管理器，在应用启动时调用，在应用关闭时调用。"""
-    logger.info("应用启动中...")
-    yield
-    logger.info("应用关闭中...")
-
-
 notify = FastAPI(
-    lifespan=lifespan_manager,  # 使用生命周期管理器
+    title="接收Pay-RX通知服务",
+    description="接收Pay-RX通知服务",
+    version="1.0.0",
     docs_url=None,
     redoc_url=None,
     openapi_url=None
