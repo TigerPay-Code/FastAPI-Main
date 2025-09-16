@@ -7,10 +7,28 @@ Description=FastAPI Receive Pay Notify Service
 After=network.target
 
 [Service]
+
 Type=simple
 
 # 运行用户
 User=root
+
+# 运行组
+Group=root
+
+# 内存限制（防止内存泄漏）
+MemoryMax=200M
+MemoryHigh=180M
+MemorySwapMax=300M
+
+# 文件描述符限制
+LimitNOFILE=65535
+
+# 进程数限制
+TasksMax=4096
+
+# CPU 限制
+CPUQuota=80%
 
 # 工作目录
 WorkingDirectory=/data/FastAPI-Main
@@ -22,7 +40,8 @@ Environment="PATH=/usr/local/bin"
 # ExecStart=/usr/local/bin/uvicorn ReceiveNotify.receive_notify:notify --host 127.0.0.1 --port 4911 --workers 1 --loop uvloop
 
 # 方案 B：Gunicorn + Uvicorn Worker（注释掉方案 A 并取消下行注释） pip3 install gunicorn "uvicorn[standard]"
-ExecStart=/usr/local/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 1 ReceiveNotify.receive_notify:notify --bind 127.0.0.1:4911
+ExecStart=/usr/local/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 1 ReceiveNotify.receive_notify:notify --bind 127.0.0.1:4911 --threads 4
+
 
 StandardOutput=append:/data/FastAPI-Main/logs/ReceiveNotify.log
 StandardError=append:/data/FastAPI-Main/logs/ReceiveNotifyError.log

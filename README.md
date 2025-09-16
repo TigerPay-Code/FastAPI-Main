@@ -87,9 +87,6 @@ uvicorn ReceiveNotify.receive_notify:notify --host 127.0.0.1 --port 4911 --worke
 deactivate
 ```
 
-
-
-
 ## 4. 项目启动
 1. 生成依赖
 ```bash
