@@ -9,9 +9,9 @@ import re
 import urllib
 import hashlib
 import urllib.parse
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # 接收Pay-RX支付通知数据模型
@@ -20,8 +20,10 @@ class Pay_RX_Notify_In_Data(BaseModel):
     sysOrderNo: str = Field(title="平台订单号", description="系统订单号", min_length=4, max_length=36)
     mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
     amount: int = Field(title="金额", description="单位分", ge=1000, le=1000000)
+    extraField: Optional[str] = Field(title="扩展字段", description="可选字段", min_length=0, max_length=32, default=None)
     sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
 
+    # ========== 字段验证器 ==========
     @field_validator('state')
     @classmethod
     def validate_state(cls, v: int) -> int:
@@ -53,6 +55,22 @@ class Pay_RX_Notify_In_Data(BaseModel):
         if not (1000 <= v <= 1000000):
             raise ValueError('金额必须在1000分到1000000分之间')
         return v
+
+    # @field_validator('mchOrderNo')
+    # @classmethod
+    # def validate_mch_order_no_prefix(cls, v: str) -> str:
+    #     """商户订单号前缀验证（示例）"""
+    #     if not v.startswith('MCH_'):
+    #         raise ValueError('商户订单号必须以MCH_开头')
+    #     return v
+    #
+    # @field_validator('sysOrderNo')
+    # @classmethod
+    # def validate_sys_order_no_prefix(cls, v: str) -> str:
+    #     """系统订单号前缀验证（示例）"""
+    #     if not v.startswith('SYS_'):
+    #         raise ValueError('系统订单号必须以SYS_开头')
+    #     return v
 
     # ========== 模型验证器 ==========
     @model_validator(mode='after')
@@ -149,19 +167,3 @@ class Pay_RX_Notify_Refund_Data(BaseModel):
     mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
     amount: int = Field(title="金额", description="单位分", ge=1, le=1000000)
     sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
-
-
-valid_data = {
-    "state": 3,
-    "sysOrderNo": "SYS_1234567890",
-    "mchOrderNo": "MCH_0987654321",
-    "amount": 50000,
-    "sign": "735B0D6A7F9793A042CD36A1F91C60F3"
-}
-
-print("验证数据:", valid_data)
-try:
-    instance = Pay_RX_Notify_In_Data(**valid_data)
-    print("验证通过:", instance, type(instance))
-except ValidationError as e:
-    print("验证失败:", e)
