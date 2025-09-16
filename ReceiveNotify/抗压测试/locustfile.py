@@ -38,11 +38,11 @@ def send_request():
 
     # 准备一个随机的 JSON payload
     payload = {
-        "state": 0,
+        "state": 2,
         "sysOrderNo": 'sys-' + uuid.uuid4().hex,
         "mchOrderNo": 'mch-' + uuid.uuid4().hex,
-        "amount": random.randint(100, 10000),
-        "sign": uuid.uuid4().hex
+        "amount": random.randint(1000, 1000000),
+        "sign": uuid.uuid4().hex.upper(),
     }
 
     # 定义请求头
@@ -60,7 +60,7 @@ def send_request():
         else:
             with lock:
                 failure_count += 1
-            print(f"请求 {route} 失败！状态码：{response.status_code}")
+            print(f"请求 {route} 失败！状态码：{response.status_code}, 响应内容：{response.text}")
     except requests.exceptions.RequestException as e:
         with lock:
             failure_count += 1

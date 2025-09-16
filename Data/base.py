@@ -54,22 +54,6 @@ class Pay_RX_Notify_In_Data(BaseModel):
             raise ValueError('金额必须在1000分到1000000分之间')
         return v
 
-    @field_validator('mchOrderNo')
-    @classmethod
-    def validate_mch_order_no_prefix(cls, v: str) -> str:
-        """商户订单号前缀验证（示例）"""
-        if not v.startswith('MCH_'):
-            raise ValueError('商户订单号必须以MCH_开头')
-        return v
-
-    @field_validator('sysOrderNo')
-    @classmethod
-    def validate_sys_order_no_prefix(cls, v: str) -> str:
-        """系统订单号前缀验证（示例）"""
-        if not v.startswith('SYS_'):
-            raise ValueError('系统订单号必须以SYS_开头')
-        return v
-
     # ========== 模型验证器 ==========
     @model_validator(mode='after')
     def validate_signature(self) -> 'Pay_RX_Notify_In_Data':
