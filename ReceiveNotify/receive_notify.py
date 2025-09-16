@@ -30,6 +30,7 @@ logger.info("接收Pay-RX通知服务启动")
 
 @notify.get("/Pay-RX_Notify")  # 测试接口
 async def pay_rx_notify():
+    logger.info(f"健康检查，返回 health，服务运行正常")
     return Response(content="health", media_type="text/plain")
 
 
