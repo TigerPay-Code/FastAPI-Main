@@ -18,7 +18,7 @@ ROUTES = [
 ]
 
 # 并发线程数
-NUM_THREADS = 300
+NUM_THREADS = 200
 
 # 用于统计结果的全局变量，使用锁来确保线程安全
 success_count = 0
@@ -38,7 +38,7 @@ def send_request():
 
     # 准备一个随机的 JSON payload
     payload = {
-        "state": 1,
+        "state": 0,
         "sysOrderNo": 'sys-' + uuid.uuid4().hex,
         "mchOrderNo": 'mch-' + uuid.uuid4().hex,
         "amount": random.randint(100, 10000),

@@ -1,60 +1,27 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Author    : 贺鉴龙
-# @File      : mysql.py
-# @Time      : 2025/9/16 12:09
-# @IDE       : PyCharm
-# @Function  :
-import aiomysql
-import redis.asyncio as aioredis
-from typing import Optional, AsyncGenerator
-from redis.asyncio.client import Redis
-from aiomysql import Pool
-from contextlib import asynccontextmanager
-
-mysql_pool: Optional[Pool] = None
-redis_client: Optional[Redis] = None
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import declarative_base, sessionmaker
+import redis.asyncio as redis
 
 
-# 使用异步上下文管理器来管理连接池的生命周期
-@asynccontextmanager
-async def lifespan_manager():
-    global mysql_pool, redis_client
+# MySQL 配置
+DATABASE_URL = f"mysql+aiomysql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+engine = create_async_engine(DATABASE_URL, echo=True)
+Base = declarative_base()
+AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-    # --- 应用启动时执行 ---
-    try:
-        mysql_pool = await aiomysql.create_pool(
-            host='localhost',
-            user='root',
-            password='123456',
-            db='test',
-            autocommit=False,
-            loop=None,
-            charset='utf8mb4',
-            maxsize=10
-        )
-        print("MySQL pool initialized successfully.")
-    except Exception as e:
-        print(f"Error initializing MySQL pool: {e}")
+# Redis 配置
+redis_pool = redis.ConnectionPool(
+    host=settings.REDIS_HOST,
+    port=settings.REDIS_PORT,
+    decode_responses=True # 自动解码 UTF-8
+)
 
-    try:
-        redis_client = aioredis.from_url(
-            f"redis://{config.REDIS_HOST}:{config.REDIS_PORT}",
-            decode_responses=True
-        )
-        await redis_client.ping()
-        print("Redis client connected successfully.")
-    except Exception as e:
-        print(f"Error connecting to Redis: {e}")
+async def get_db_session():
+    """依赖注入，获取数据库会话"""
+    async with AsyncSessionLocal() as session:
+        yield session
 
-    # 使用 `yield` 将控制权交给 FastAPI 应用程序
-    yield
-
-    # --- 应用关闭时执行 ---
-    if mysql_pool:
-        mysql_pool.close()
-        await mysql_pool.wait_closed()
-        print("MySQL pool closed.")
-    if redis_client:
-        await redis_client.close()
-        print("Redis client closed.")
+async def get_redis_client():
+    """依赖注入，获取 Redis 客户端"""
+    async with redis.Redis(connection_pool=redis_pool) as r:
+        yield r

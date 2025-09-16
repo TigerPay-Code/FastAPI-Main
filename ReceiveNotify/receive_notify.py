@@ -14,7 +14,7 @@ log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
 notify = FastAPI(
-    title="接收Pay-RX通知服务",
+    title="FastAPI Receive Pay Notify Service",
     description="接收Pay-RX通知服务",
     version="1.0.0",
     docs_url=None,
@@ -36,7 +36,7 @@ async def pay_rx_notify():
 @notify.post("/global_pay_in_notify")
 async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
     logger.info(f"收到 【代收】 通知：数据：{notify_in_data}")
-    if notify_in_data.state == 1:
+    if notify_in_data.state == 2:
         logger.info(f"订单号: {notify_in_data.sysOrderNo} 已成功支付，金额: {notify_in_data.amount}")
     else:
         logger.error(f"订单号: {notify_in_data.sysOrderNo} 支付失败，金额: {notify_in_data.amount}")
