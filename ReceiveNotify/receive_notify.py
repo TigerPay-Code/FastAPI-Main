@@ -18,7 +18,8 @@ logger = setup_logger(log_name)
 
 
 @asynccontextmanager
-async def lifespan_manager(): # 添加类型提示
+async def lifespan_manager() -> AsyncContextManager[None]:  # 添加类型提示
+    """生命周期管理器，在应用启动时调用，在应用关闭时调用。"""
     logger.info("应用启动中...")
     yield
     logger.info("应用关闭中...")
