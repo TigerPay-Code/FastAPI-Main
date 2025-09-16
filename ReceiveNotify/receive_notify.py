@@ -8,22 +8,36 @@
 import os
 
 from fastapi import FastAPI, Response
-
+from contextlib import asynccontextmanager
+from typing import AsyncContextManager, Any, AsyncGenerator
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
-logger.info("接收Pay-RX通知服务启动")
 
-notify = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+@asynccontextmanager
+async def lifespan_manager(): # 添加类型提示
+    logger.info("应用启动中...")
+    yield
+    logger.info("应用关闭中...")
+
+
+notify = FastAPI(
+    lifespan=lifespan_manager,  # 使用生命周期管理器
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
+)
 
 success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
 
+logger.info("接收Pay-RX通知服务启动")
 
-@notify.get("/Pay-RX_Notify") # 测试接口
+
+@notify.get("/Pay-RX_Notify")  # 测试接口
 async def pay_rx_notify():
     return Response(content="health", media_type="text/plain")
 

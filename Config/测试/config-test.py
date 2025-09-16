@@ -44,9 +44,15 @@ try:
         ini_config.set(key='database.init', value=True)
         ini_config.save()
     else:
-        print("数据库初始化已启用。")
+        print("数据库已经初始化。")
+        async_database_url = ini_config.get(key='database.database_url', get_type=str)
+        print(f"数据库连接 URL: {async_database_url}")
         ini_config.set(key='database.init', value=False)
         ini_config.save()
+
+
+
+
 except FileNotFoundError as e:
     print(f"错误: {e}")
 except Exception as e:
