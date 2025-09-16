@@ -7,8 +7,8 @@ import json
 import random
 
 # 要测试的 API 主机地址
-# API_HOST = "https://notify.king-sms.com"
-API_HOST = "http://127.0.0.1:4911"
+API_HOST = "https://notify.king-sms.com"
+# API_HOST = "http://127.0.0.1:4911"
 
 # 要测试的所有路由列表
 ROUTES = [
