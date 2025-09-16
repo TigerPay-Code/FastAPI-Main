@@ -7,100 +7,26 @@
 # @Function  :
 from pydantic import BaseModel, Field
 
-
-class Notify_In_Data(BaseModel):
-    state: int = Field(
-        title="代收状态",
-        description="0-订单生成,1-支付中,2-支付成功,3-支付失败",
-        default=0
-    )
-    sysOrderNo: str = Field(
-        title="平台订单号",
-        description="系统订单号",
-        min_length=4,
-        max_length=36
-    )
-    mchOrderNo: str = Field(
-        title="下游订单号",
-        description="商户订单号",
-        min_length=4,
-        max_length=36
-    )
-
-    amount: int = Field(
-        title="金额",
-        description="单位分",
-        ge=1000,
-        le=1000000000
-    )
-    sign: str = Field(
-        title="签名",
-        description="签名值大写的MD5值",
-        min_length=32,
-        max_length=32
-    )
+# 接收Pay-RX支付通知数据模型
+class Pay_RX_Notify_In_Data(BaseModel):
+    state: int = Field(title="代收状态", description="0-订单生成,1-支付中,2-支付成功,3-支付失败", default=0)
+    sysOrderNo: str = Field(title="平台订单号", description="系统订单号", min_length=4, max_length=36)
+    mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
+    amount: int = Field(title="金额", description="单位分", ge=1000, le=1000000000)
+    sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
 
 
-class Notify_Out_Data(BaseModel):
-    state: int = Field(
-        title="支付状态",
-        description="0-订单生成,1-支付中,2-支付成功,3-支付失败",
-        default=0
-    )
-    sysOrderNo: str = Field(
-        title="平台订单号",
-        description="系统订单号",
-        min_length=4,
-        max_length=36
-    )
-    mchOrderNo: str = Field(
-        title="下游订单号",
-        description="商户订单号",
-        min_length=4,
-        max_length=36
-    )
+class Pay_RX_Notify_Out_Data(BaseModel):
+    state: int = Field(title="支付状态", description="0-订单生成,1-支付中,2-支付成功,3-支付失败", default=0)
+    sysOrderNo: str = Field(title="平台订单号", description="系统订单号", min_length=4, max_length=36)
+    mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
+    amount: int = Field(title="金额", description="单位分", ge=1, le=1000000000)
+    sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
 
-    amount: int = Field(
-        title="金额",
-        description="单位分",
-        ge=1,
-        le=1000000000
-    )
-    sign: str = Field(
-        title="签名",
-        description="签名值大写的MD5值",
-        min_length=32,
-        max_length=32
-    )
 
-class Notify_Refund_Data(BaseModel):
-    state: int = Field(
-        title="支付状态",
-        description="0-订单生成,1-支付中,2-支付成功,3-支付失败",
-        default=0
-    )
-    sysOrderNo: str = Field(
-        title="平台订单号",
-        description="系统订单号",
-        min_length=4,
-        max_length=36
-    )
-    mchOrderNo: str = Field(
-        title="下游订单号",
-        description="商户订单号",
-        min_length=4,
-        max_length=36
-    )
-
-    amount: int = Field(
-        title="金额",
-        description="单位分",
-        ge=1,
-        le=1000000000
-    )
-    sign: str = Field(
-        title="签名",
-        description="签名值大写的MD5值",
-        min_length=32,
-        max_length=32
-    )
+class Pay_RX_Notify_Refund_Data(BaseModel):
+    state: int = Field(title="退款状态", description="0-订单生成,1-退款中,2-退款成功,3-退款失败", default=0)
+    sysOrderNo: str = Field(title="平台订单号", description="系统订单号", min_length=4, max_length=36)
+    mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
+    amount: int = Field(title="金额", description="单位分", ge=1, le=1000000000)
+    sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
