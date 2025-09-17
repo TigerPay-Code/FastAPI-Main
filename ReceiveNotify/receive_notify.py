@@ -12,9 +12,10 @@ from Config.config_loader import initialize_config, public_config
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 
 # 引用数据库异步操作模块
-from DataBase.async_mysql import register_lifespan_handlers, mysql_manager, redis_manager, get_mysql_conn, get_redis_client, overall_health
-
+from DataBase.async_mysql import mysql_manager, get_mysql_conn
+from DataBase.async_redis import redis_manager
 import aiomysql
+
 
 # 引用日志模块
 from Logger.logger_config import setup_logger
@@ -53,7 +54,6 @@ redis_cfg = {
     "max_connections": 50,
 }
 
-register_lifespan_handlers(notify, mysql_cfg, redis_cfg)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
