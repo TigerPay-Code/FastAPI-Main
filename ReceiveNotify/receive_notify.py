@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from Config.config_loader import initialize_config, public_config
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from math import ceil
@@ -40,7 +41,8 @@ notify = FastAPI(
     openapi_url=None
 )
 
-templates = Jinja2Templates(directory="../templates")
+templates = Jinja2Templates(directory="templates")
+notify.mount("/static", StaticFiles(directory="static"), name="static")
 
 mysql_cfg = {
     "host": public_config.get(key="database.host", get_type=str),
