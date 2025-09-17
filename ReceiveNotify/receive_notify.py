@@ -95,6 +95,75 @@ async def test_redis(redis=Depends(get_redis)):
     return {"redis_value": val}
 
 
+@notify.post("/user")
+async def create_user(conn=Depends(get_mysql_conn)):
+    async with conn.cursor() as cur:
+        await cur.execute(
+            "INSERT INTO users (username, email) VALUES (%s, %s)",
+            ("alice", "alice@example.com"),
+        )
+        await conn.commit()  # 提交事务
+    return {"msg": "user created"}
+
+
+# 查询数据 (查)
+@notify.get("/user/{user_id}")
+async def get_user(user_id: int, conn=Depends(get_mysql_conn)):
+    async with conn.cursor(aiomysql.DictCursor) as cur:
+        await cur.execute("SELECT id, username, email FROM users WHERE id=%s", (user_id,))
+        row = await cur.fetchone()
+    return {"user": row}
+
+
+# 更新数据 (改)
+@notify.put("/user/{user_id}")
+async def update_user(user_id: int, conn=Depends(get_mysql_conn)):
+    async with conn.cursor() as cur:
+        await cur.execute(
+            "UPDATE users SET email=%s WHERE id=%s",
+            ("new_email@example.com", user_id),
+        )
+        await conn.commit()
+    return {"msg": "user updated"}
+
+
+# 删除数据 (删)
+@notify.delete("/user/{user_id}")
+async def delete_user(user_id: int, conn=Depends(get_mysql_conn)):
+    async with conn.cursor() as cur:
+        await cur.execute("DELETE FROM users WHERE id=%s", (user_id,))
+        await conn.commit()
+    return {"msg": "user deleted"}
+
+
+@notify.post("/transfer")
+async def transfer_money(conn=Depends(get_mysql_conn)):
+    """
+    模拟事务：从用户1扣钱，给用户2加钱
+    """
+    try:
+        async with conn.cursor() as cur:
+            await conn.begin()  # 开启事务
+
+            # 扣钱
+            await cur.execute(
+                "UPDATE accounts SET balance = balance - %s WHERE id=%s",
+                (100, 1),
+            )
+
+            # 加钱
+            await cur.execute(
+                "UPDATE accounts SET balance = balance + %s WHERE id=%s",
+                (100, 2),
+            )
+
+            await conn.commit()  # 提交事务
+        return {"msg": "transfer success"}
+    except Exception as e:
+        await conn.rollback()  # 回滚事务
+        return {"error": str(e)}
+
+
 @notify.get("/users")
 async def users(conn=Depends(get_mysql_conn)):
     async with conn.cursor(aiomysql.DictCursor) as cur:
