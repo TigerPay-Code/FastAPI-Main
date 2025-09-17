@@ -5,13 +5,17 @@
 # @Time      : 2025/9/16 11:18
 # @IDE       : PyCharm
 # @Function  :
+import os
 import re
 import urllib
 import hashlib
 import urllib.parse
 from typing import Dict, List, Any, Optional
-
 from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
+from Logger.logger_config import setup_logger
+
+log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
+logger = setup_logger(log_name)
 
 
 # 接收Pay-RX支付通知数据模型
@@ -20,8 +24,7 @@ class Pay_RX_Notify_In_Data(BaseModel):
     sysOrderNo: str = Field(title="平台订单号", description="系统订单号", min_length=4, max_length=36)
     mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
     amount: int = Field(title="金额", description="单位分", ge=1000, le=1000000)
-    extraField: Optional[str] = Field(title="扩展字段", description="可选字段", min_length=0, max_length=32,
-                                      default=None)
+    extraField: Optional[str] = Field(title="扩展字段", description="可选字段", min_length=0, max_length=32, default=None)
     sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
 
     # ========== 字段验证器 ==========
@@ -30,6 +33,8 @@ class Pay_RX_Notify_In_Data(BaseModel):
     def validate_state(cls, v: int) -> int:
         """验证状态值是否有效"""
         if v not in [0, 1, 2, 3]:
+            logger.error(f'状态码验证失败: 传入值{v}，无效状态码。'
+                         '允许值: 0(订单生成), 1(支付中), 2(支付成功), 3(支付失败)')
             raise ValueError(
                 f'无效状态码: {v}。'
                 '允许值: 0(订单生成), 1(支付中), 2(支付成功), 3(支付失败)')
@@ -40,6 +45,7 @@ class Pay_RX_Notify_In_Data(BaseModel):
     def validate_order_no_format(cls, v: str) -> str:
         """验证订单号格式"""
         if not re.match(r'^[a-zA-Z0-9_-]{4,36}$', v):
+            logger.error(f'订单号验证失败: 传入值{v}，订单号只能包含字母、数字、下划线和连字符')
             raise ValueError('订单号只能包含字母、数字、下划线和连字符')
         return v
 
@@ -48,6 +54,7 @@ class Pay_RX_Notify_In_Data(BaseModel):
     def validate_sign_format(cls, v: str) -> str:
         """验证签名格式"""
         if not re.match(r'^[A-Z0-9]{32}$', v):
+            logger.error(f'签名验证失败: 传入值{v}，签名必须是32位大写MD5值')
             raise ValueError('签名必须是32位大写MD5值')
         return v
 
@@ -56,7 +63,8 @@ class Pay_RX_Notify_In_Data(BaseModel):
     def validate_amount_range(cls, v: int) -> int:
         """验证金额范围"""
         if not (1000 <= v <= 1000000):
-            raise ValueError('金额必须在1000分到1000000分之间')
+            logger.error(f'金额验证失败: 传入值{v}分，金额必须在1000到1000000分之间')
+            raise ValueError('金额必须在1000到1000000分之间')
         return v
 
     # @field_validator('mchOrderNo')
@@ -96,19 +104,17 @@ class Pay_RX_Notify_In_Data(BaseModel):
 
         # 步骤2：按参数名ASCII码从小到大排序
         sorted_items = self._sort_params(sign_data)
-        print("排序后参数:", sorted_items)
 
         # 步骤3：构建签名字符串
         sign_str = self._build_sign_string(sorted_items)
-        print("签名字符串:", sign_str)
 
         # 步骤4：计算签名
         calculated_sign = self._calculate_md5(sign_str)
 
         # 步骤5：验证签名
         if not self._safe_compare_sign(calculated_sign, self.sign):
+            logger.error(f'签名验证失败: 计算签名={calculated_sign}, 传入签名={self.sign}')
             raise ValueError(f'签名验证失败: 计算签名={calculated_sign}, 传入签名={self.sign}')
-
         return self
 
     def _sort_params(self, params: Dict[str, Any]) -> List[tuple]:
@@ -171,14 +177,13 @@ class Pay_RX_Notify_Refund_Data(BaseModel):
     amount: int = Field(title="金额", description="单位分", ge=1, le=1000000)
     sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
 
-
-try:
-    data = Pay_RX_Notify_In_Data(
-        state=3,  # 无效值
-        sysOrderNo="ORD123456",
-        mchOrderNo="MCH987654",
-        amount=5000,
-        sign="A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6"
-    )
-except ValidationError as e:
-    print(e.errors())
+# try:
+#     data = Pay_RX_Notify_In_Data(
+#         state=3,  # 无效值
+#         sysOrderNo="ORD123456",
+#         mchOrderNo="MCH987654",
+#         amount=5000,
+#         sign="F0A7708FEB4B6C9C197A37AAA22FE3F4"
+#     )
+# except ValidationError as e:
+#     print(e.errors())
