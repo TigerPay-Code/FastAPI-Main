@@ -114,7 +114,7 @@ class Pay_RX_Notify_In_Data(BaseModel):
         # 步骤5：验证签名
         if not self._safe_compare_sign(calculated_sign, self.sign):
             logger.error(f'签名验证失败: 计算签名={calculated_sign}, 传入签名={self.sign}')
-            raise ValueError(f'签名验证失败: 计算签名={calculated_sign}, 传入签名={self.sign}')
+            raise ValueError(f'签名验证失败:传入签名={self.sign}')
         return self
 
     def _sort_params(self, params: Dict[str, Any]) -> List[tuple]:

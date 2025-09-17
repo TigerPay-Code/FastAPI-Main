@@ -38,7 +38,7 @@ def send_request():
 
     # 准备一个随机的 JSON payload
     payload = {
-        "state": 5,
+        "state": 2,
         "sysOrderNo": 'sys-' + uuid.uuid4().hex,
         "mchOrderNo": 'mch-' + uuid.uuid4().hex,
         "amount": random.randint(1000, 1000000),
