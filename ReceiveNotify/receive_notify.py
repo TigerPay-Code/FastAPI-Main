@@ -8,7 +8,7 @@
 import os
 from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
-from Config.config_loader import initialize_config, config
+from Config.config_loader import initialize_config, public_config
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 from Logger.logger_config import setup_logger
 
@@ -30,10 +30,9 @@ notify = FastAPI(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     logger.info("接收Pay-RX通知服务启动")
     initialize_config()
-    logger.info(f"当前操作系统：{config.get('software.system')}")
+    logger.info(f"当前操作系统：{public_config.get('software.system')}")
     yield
     logger.info("接收Pay-RX通知服务关闭")
 

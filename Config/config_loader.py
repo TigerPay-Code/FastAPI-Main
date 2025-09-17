@@ -3,7 +3,6 @@ import json
 import configparser
 import sys
 
-import yaml
 from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
@@ -34,10 +33,6 @@ class ConfigLoader:
         file_ext = os.path.splitext(self.config_path)[1].lower()
         if file_ext in ['.ini']:
             return self._load_ini()
-        elif file_ext in ['.json']:
-            return self._load_json()
-        elif file_ext in ['.yaml', '.yml']:
-            return self._load_yaml()
         else:
             raise ValueError(f"不支持的文件格式: {file_ext}")
 
@@ -51,21 +46,6 @@ class ConfigLoader:
         for section in config.sections():
             data[section] = dict(config.items(section))
         return data
-
-    def _load_json(self):
-        """
-        加载 JSON 格式的配置文件。
-        """
-        with open(self.config_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-
-    def _load_yaml(self):
-        """
-        加载 YAML 格式的配置文件。
-        """
-        with open(self.config_path, 'r', encoding='utf-8') as f:
-            # 使用 FullLoader 以避免安全问题
-            return yaml.load(f, Loader=yaml.FullLoader)
 
     def get(self, key, get_type: type = str, default=None):
         """
@@ -126,10 +106,6 @@ class ConfigLoader:
         file_ext = os.path.splitext(self.config_path)[1].lower()
         if file_ext in ['.ini']:
             self._save_ini()
-        elif file_ext in ['.json']:
-            self._save_json()
-        elif file_ext in ['.yaml', '.yml']:
-            self._save_yaml()
         else:
             raise ValueError(f"不支持的文件格式: {file_ext}")
 
@@ -144,20 +120,6 @@ class ConfigLoader:
         with open(self.config_path, 'w', encoding='utf-8') as f:
             config.write(f)
 
-    def _save_json(self):
-        """
-        将配置数据保存为 JSON 格式。
-        """
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            json.dump(self._config_data, f, indent=4, ensure_ascii=False)
-
-    def _save_yaml(self):
-        """
-        将配置数据保存为 YAML 格式。
-        """
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            yaml.dump(self._config_data, f, default_flow_style=False, allow_unicode=True)
-
 
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(project_root)
@@ -165,16 +127,17 @@ sys.path.append(project_root)
 # 构造配置文件路径
 config_path = os.path.join(project_root, 'config.ini')
 
-config = ConfigLoader
+public_config = ConfigLoader
+
 
 def initialize_config():
     """
     根据当前操作系统更新配置文件。
     """
-    global config
+    global public_config
     try:
         # 实例化 ConfigLoader 并加载配置文件
-        config = ConfigLoader(config_path)
+        public_config = ConfigLoader(config_path)
 
         # 检测操作系统
         os_name = sys.platform
@@ -188,7 +151,7 @@ def initialize_config():
             system_name = "macOS"
 
         # 获取当前配置文件中的系统名称
-        current_system = config.get(key='software.system',get_type=str)
+        current_system = public_config.get(key='software.system', get_type=str)
 
         # 如果配置文件中的系统名称与当前系统不匹配，则进行更新
         if current_system != system_name:
@@ -196,29 +159,33 @@ def initialize_config():
             logger.warning("正在更新配置文件...")
 
             # 使用 set 方法更新值
-            config.set(key='software.system', value=system_name)
+            public_config.set(key='software.system', value=system_name)
 
             # 保存更改到文件
-            config.save()
+            public_config.save()
             logger.warning("配置文件已更新。")
         else:
             logger.warning(f"配置文件已是最新状态，系统名称为 '{system_name}'。")
 
         # 硬件信息初始化
-        if not config.get(key='hardware.init',get_type=bool):
-            pass
+        if not public_config.get(key='hardware.init', get_type=bool):
+            public_config.set(key='hardware.init', value=True)
+            public_config.save()
 
         # 软件信息初始化
-        if not config.get(key='software.init',get_type=bool):
-            pass
+        if not public_config.get(key='software.init', get_type=bool):
+            public_config.set(key='software.init', value=True)
+            public_config.save()
 
         # 数据库信息初始化
-        if not config.get(key='database.init',get_type=bool):
-            pass
+        if not public_config.get(key='database.init', get_type=bool):
+            public_config.set(key='database.init', value=True)
+            public_config.save()
 
         # Redis信息初始化
-        if not config.get(key='redis.init',get_type=bool):
-            pass
+        if not public_config.get(key='redis.init', get_type=bool):
+            public_config.set(key='redis.init', value=True)
+            public_config.save()
 
 
     except FileNotFoundError as e:
