@@ -29,7 +29,9 @@ notify = FastAPI(
 
 
 @asynccontextmanager
-async def lifespan():
+async def lifespan(app: FastAPI):
+    logger.info(f"服务名称：{app.openapi()['info']['title']}")
+    logger.info("接收Pay-RX通知服务启动")
     logger.info("接收Pay-RX通知服务启动")
     initialize_config()
     logger.info(f"当前操作系统：{public_config.get(key='software.system', get_type=str)}")
