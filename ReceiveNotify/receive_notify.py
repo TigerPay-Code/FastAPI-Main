@@ -31,6 +31,7 @@ notify = FastAPI(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"服务名称：{app.openapi()['info']['title']}")
+    logger.info(f"app.openapi：{app.openapi()}")
     logger.info("接收Pay-RX通知服务启动")
     logger.info("接收Pay-RX通知服务启动")
     initialize_config()
