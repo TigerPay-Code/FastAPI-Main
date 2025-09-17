@@ -6,7 +6,7 @@
 - Config：配置模块
 - Database：数据库模块
 - Logger：日志模块
-- Logrotate：日志轮转配置文件
+- Middleware：中间件模块
 - Nginx：Nginx 配置文件
 - ProjectUpdate：项目更新脚本
 - ReceiveNotify：接收支付通知模块
@@ -24,7 +24,6 @@
 ├── Config
 │   ├── __init__.py
 │   ├── config.ini------------------# 配置文件
-│   ├── config-initialize.py--------# 配置初始化脚本
 │   └── mconfig_loader.py-----------# 配置加载器
 ├── Database
 │   ├── __init__.py
