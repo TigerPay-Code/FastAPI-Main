@@ -6,35 +6,47 @@
 # @IDE       : PyCharm
 # @Function  :
 import aioredis
+from redis.asyncio import Redis
+
 
 class RedisPoolManager:
-    def __init__(self):
-        self.pool = None
+    def __init__(self) -> None:
+        self.client: Redis | None = None
 
-    async def init_pool(self, url: str, max_connections: int = 50):
-        if self.pool is None:
-            self.pool = await aioredis.from_url(
-                url,
-                max_connections=max_connections,
-                encoding="utf-8",
-                decode_responses=True
-            )
-            print("✅ Redis pool initialized")
+    async def init_pool(self, **kwargs) -> None:
+        """初始化 Redis 连接池"""
+        if self.client is None:
+            # 默认参数
+            config = {
+                "max_connections": 50,
+                "encoding": "utf-8",
+                "decode_responses": True,
+            }
+            # 用户配置覆盖默认
+            config.update(kwargs)
 
-    async def close(self):
-        if self.pool:
-            await self.pool.close()
-            self.pool = None
-            print("🛑 Redis pool closed")
+            self.client = aioredis.from_url(**config)
+            # 测试连接
+            try:
+                await self.client.ping()
+            except Exception:
+                raise RuntimeError("Redis connection test failed")
 
-    def ensure_inited(self):
-        if self.pool is None:
-            raise RuntimeError("RedisPoolManager not initialized. Call init_pool first.")
+    async def close(self) -> None:
+        """关闭 Redis 连接"""
+        if self.client is not None:
+            await self.client.close()
+            self.client = None
+
+    def ensure_inited(self) -> None:
+        if self.client is None:
+            raise RuntimeError("RedisManager not initialized. Call init_pool first.")
 
 
 redis_manager = RedisPoolManager()
 
-# 依赖注入
+
+# FastAPI 依赖
 async def get_redis():
     redis_manager.ensure_inited()
-    yield redis_manager.pool
+    yield redis_manager.client

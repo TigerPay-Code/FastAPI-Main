@@ -40,9 +40,7 @@ mysql_cfg = {
     "user": public_config.get(key="database.user", get_type=str),
     "password": public_config.get(key="database.password", get_type=str),
     "db": public_config.get(key="database.database", get_type=str),
-    "charset": public_config.get(key="database.charset", get_type=str),
-    "minsize": 2,
-    "maxsize": 20
+    "charset": public_config.get(key="database.charset", get_type=str)
 }
 redis_url = (f"redis://{public_config.get(key='redis.host', get_type=str)}:"
              f"{public_config.get(key='redis.port', get_type=int)}/"

@@ -4,51 +4,64 @@ connection_manager.py
 FastAPI-friendly high-performance connection pool manager for MySQL (aiomysql) and Redis (aioredis).
 """
 import os
+import aiomysql
+from aiomysql import Pool as MySQLPool
 from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
-import aiomysql
-
 
 class MySQLPoolManager:
-    def __init__(self):
-        self.pool = None
+    def __init__(self) -> None:
+        self.pool: MySQLPool | None = None
 
-    async def init_pool(self, **kwargs):
+    async def init_pool(self, **kwargs) -> None:
+        """初始化 MySQL 连接池"""
         if self.pool is None:
-            self.pool = await aiomysql.create_pool(
-                minsize=kwargs.get("minsize", 2),
-                maxsize=kwargs.get("maxsize", 20),
-                **kwargs
-            )
-            print("✅ MySQL pool initialized")
+            # 默认参数
+            config = {
+                "minsize": 2,
+                "maxsize": 20,
+                "autocommit": True,
+            }
+            # 用户配置覆盖默认
+            config.update(kwargs)
 
-    async def close(self):
-        if self.pool:
+            self.pool = await aiomysql.create_pool(**config)
+            # 测试连接
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute("SELECT 1")
+
+    async def close(self) -> None:
+        """关闭连接池"""
+        if self.pool is not None:
             self.pool.close()
             await self.pool.wait_closed()
             self.pool = None
-            print("🛑 MySQL pool closed")
 
-    def ensure_inited(self):
+    def ensure_inited(self) -> None:
+        """确认连接池已初始化"""
         if self.pool is None:
             raise RuntimeError("MySQLPoolManager not initialized. Call init_pool first.")
 
     async def acquire(self):
+        """获取一个连接"""
         self.ensure_inited()
+        assert self.pool is not None
         return await self.pool.acquire()
 
-    async def release(self, conn):
-        self.ensure_inited()
-        self.pool.release(conn)
+    async def release(self, conn) -> None:
+        """释放连接"""
+        if self.pool is not None:
+            self.pool.release(conn)
 
 
 mysql_manager = MySQLPoolManager()
 
 
-# 依赖注入
+# FastAPI 依赖
 async def get_mysql_conn():
     conn = await mysql_manager.acquire()
     try:
