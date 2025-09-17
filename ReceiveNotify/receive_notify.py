@@ -6,6 +6,8 @@
 # @IDE       : PyCharm
 # @Function  : 接收支付通知 （global_pay_in_notify 代收通知，global_pay_out_notify 代付通知，global_refund_notify 退款通知）
 import os
+import time
+
 from fastapi import FastAPI, Response, Depends
 from contextlib import asynccontextmanager
 from Config.config_loader import initialize_config, public_config
@@ -109,19 +111,27 @@ async def create_user(conn=Depends(get_mysql_conn)):
 # 查询数据 (查)
 @notify.get("/user/{user_id}")
 async def get_user(user_id: int, conn=Depends(get_mysql_conn)):
+    start = time.perf_counter_ns()
     async with conn.cursor(aiomysql.DictCursor) as cur:
         await cur.execute("SELECT id, username, email, balance FROM users WHERE id=%s", (user_id,))
         row = await cur.fetchone()
-    return {"user": row}
+    end = time.perf_counter_ns()
+    elapsed_ms = (end - start) / 1_000_000
+    logger.info(f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
+    return {"user": row, "query_time_ns": f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒"}
 
 
 # 查询数据 (查)
 @notify.get("/username/{user_name}")
 async def get_user(user_name: str, conn=Depends(get_mysql_conn)):
+    start = time.perf_counter_ns()
     async with conn.cursor(aiomysql.DictCursor) as cur:
         await cur.execute("SELECT id, username, email, balance FROM users WHERE username=%s", (user_name,))
         row = await cur.fetchone()
-    return {"user": row}
+    end = time.perf_counter_ns()
+    elapsed_ms = (end - start) / 1_000_000
+    logger.info(f"查询用户名: {user_name} 耗时: {elapsed_ms:.6f} 毫秒")
+    return {"user": row, "query_time_ns": f"查询用户名: {user_name} 耗时: {elapsed_ms:.6f} 毫秒"}
 
 
 # 更新数据 (改)
