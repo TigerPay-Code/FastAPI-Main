@@ -194,7 +194,7 @@ def initialize_config():
             logger.warning("正在更新配置文件...")
 
             # 使用 set 方法更新值
-            config.set('SoftWare.system', system_name)
+            config.set('software.system', system_name)
 
             # 保存更改到文件
             config.save()
