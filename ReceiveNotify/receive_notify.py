@@ -57,13 +57,27 @@ register_lifespan_handlers(notify, mysql_cfg, redis_cfg)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"服务名称：{app.openapi()['info']['title']}")
-    logger.info(f"app.openapi：{app.openapi()}")
-    logger.info("接收Pay-RX通知服务启动")
-    logger.info("接收Pay-RX通知服务启动")
-    initialize_config()
     logger.info(f"当前操作系统：{public_config.get(key='software.system', get_type=str)}")
+
+    logger.info(f"服务名称：{app.openapi()['info']['title']}")
+
+    logger.info("正在初始化配置文件...")
+    initialize_config()
+
+
+    logger.info(f"正在启动数据库连接池...")
+    await mysql_manager.init_pool(**mysql_cfg)
+
+    logger.info(f"正在启动Redis连接池...")
+    await redis_manager.init_pool(**redis_cfg)
+
     yield
+
+    logger.info(f"正在关闭数据库连接池...")
+    await mysql_manager.close()
+    logger.info(f"正在关闭Redis连接池...")
+    await redis_manager.close()
+
     logger.info("接收Pay-RX通知服务关闭")
 
 
