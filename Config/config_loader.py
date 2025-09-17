@@ -156,7 +156,7 @@ def initialize_config():
         # 如果配置文件中的系统名称与当前系统不匹配，则进行更新
         if current_system != system_name:
             logger.warning(f"检测到系统名称不匹配：当前为 '{system_name}'，配置文件为 '{current_system}'")
-            logger.warning("正在更新配置文件...")
+            logger.info("正在更新配置文件...")
 
             # 使用 set 方法更新值
             public_config.set(key='software.system', value=system_name)
@@ -171,21 +171,25 @@ def initialize_config():
         if not public_config.get(key='hardware.init', get_type=bool):
             public_config.set(key='hardware.init', value=True)
             public_config.save()
+            logger.info("硬件信息初始化完成。")
 
         # 软件信息初始化
         if not public_config.get(key='software.init', get_type=bool):
             public_config.set(key='software.init', value=True)
             public_config.save()
+            logger.info("软件信息初始化完成。")
 
         # 数据库信息初始化
         if not public_config.get(key='database.init', get_type=bool):
             public_config.set(key='database.init', value=True)
             public_config.save()
+            logger.info("数据库信息初始化完成。")
 
         # Redis信息初始化
         if not public_config.get(key='redis.init', get_type=bool):
             public_config.set(key='redis.init', value=True)
             public_config.save()
+            logger.info("Redis信息初始化完成。")
 
     except FileNotFoundError as init_file_error:
         logger.warning(f"错误：配置文件未找到，请检查路径。{init_file_error}")

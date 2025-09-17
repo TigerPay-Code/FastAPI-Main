@@ -26,3 +26,5 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+
+# git stash # 放弃本地修改
