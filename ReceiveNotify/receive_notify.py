@@ -13,9 +13,8 @@ from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Noti
 
 # 引用数据库异步操作模块
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
-from DataBase.async_redis import redis_manager
+from DataBase.async_redis import redis_manager, get_redis
 import aiomysql
-
 
 # 引用日志模块
 from Logger.logger_config import setup_logger
@@ -41,9 +40,9 @@ mysql_cfg = {
     "user": public_config.get(key="database.user", get_type=str),
     "password": public_config.get(key="database.password", get_type=str),
     "db": public_config.get(key="database.database", get_type=str),
-    "minsize": public_config.get(key="database.minsize", get_type=int),
-    "maxsize": public_config.get(key="database.maxsize", get_type=int),
-    "charset": public_config.get(key="database.charset", get_type=str)
+    "charset": public_config.get(key="database.charset", get_type=str),
+    "minsize": 2,
+    "maxsize": 20
 }
 redis_url = (f"redis://{public_config.get(key='redis.host', get_type=str)}:"
              f"{public_config.get(key='redis.port', get_type=int)}/"
@@ -64,7 +63,6 @@ async def lifespan(app: FastAPI):
     logger.info("正在初始化配置文件...")
     initialize_config()
 
-
     logger.info(f"正在启动数据库连接池...")
     await mysql_manager.init_pool(**mysql_cfg)
 
@@ -84,16 +82,28 @@ async def lifespan(app: FastAPI):
 notify.router.lifespan_context = lifespan
 
 
-@notify.get("/health")
-async def health():
-    return await overall_health()
+@notify.get("/mysql")
+async def test_mysql(conn=Depends(get_mysql_conn)):
+    async with conn.cursor() as cur:
+        await cur.execute("SELECT NOW()")
+        row = await cur.fetchone()
+    return {"mysql_time": row[0].isoformat()}
+
+
+@notify.get("/redis")
+async def test_redis(redis=Depends(get_redis)):
+    await redis.set("fastapi:test", "hello", ex=10)
+    val = await redis.get("fastapi:test")
+    return {"redis_value": val}
+
 
 @notify.get("/users")
-async def users(conn = Depends(get_mysql_conn)):
+async def users(conn=Depends(get_mysql_conn)):
     async with conn.cursor(aiomysql.DictCursor) as cur:
         await cur.execute("SELECT id, username FROM users LIMIT 100")
         rows = await cur.fetchall()
         return rows
+
 
 @notify.get("/Pay-RX_Notify")  # 测试接口
 async def pay_rx_notify():
