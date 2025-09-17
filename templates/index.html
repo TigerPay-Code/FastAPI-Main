@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>带图标随机二维码</title>
+    <!-- 引入qrcode.js库用于生成二维码 -->
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@gh-pages/qrcode.min.js"></script>
+
+    <!-- 引入Font Awesome图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 重置所有元素的默认边距和内边距 */
+        * {
+            margin: 0;
+            padding: 0;
+            /* 使用border-box盒模型，更易控制元素尺寸 */
+            box-sizing: border-box;
+        }
+
+        /* 页面主体样式 */
+        body {
+            background: white; /* 纯白色背景 */
+            min-height: 100vh; /* 至少占满整个视口高度 */
+            display: flex; /* 使用flex布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+        }
+
+        /* 二维码容器样式 */
+        .qr-container {
+            position: relative; /* 相对定位，为内部绝对定位元素提供参考 */
+
+            /* 使用vmin单位确保二维码大小随屏幕尺寸变化 */
+            width: 80vmin; /* 宽度为视口较小尺寸的80% */
+            height: 80vmin; /* 高度与宽度相同，保持正方形 */
+
+            /* 设置最大和最小尺寸，避免在极端屏幕上过大或过小 */
+            max-width: 400px; /* 最大宽度400px */
+            max-height: 400px; /* 最大高度400px */
+            min-width: 200px; /* 最小宽度200px */
+            min-height: 200px; /* 最小高度200px */
+        }
+
+        /* 二维码元素样式 */
+        #qrcode {
+            width: 100%; /* 宽度100%填充容器 */
+            height: 100%; /* 高度100%填充容器 */
+            display: flex; /* 使用flex布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            background: white; /* 白色背景 */
+        }
+
+        /* 二维码中央图标容器样式 */
+        .qr-icon {
+            position: absolute; /* 绝对定位，相对于.qr-container */
+            top: 50%; /* 顶部定位到50%位置 */
+            left: 50%; /* 左侧定位到50%位置 */
+            transform: translate(-50%, -50%); /* 使用transform精确居中 */
+
+            background: white; /* 白色背景 */
+            border-radius: 50%; /* 圆形 */
+
+            /* 图标大小使用百分比，随容器大小变化 */
+            width: 20%; /* 宽度为容器宽度的20% */
+            height: 20%; /* 高度为容器高度的20% */
+
+            /* 设置最小和最大尺寸，确保图标清晰可见 */
+            min-width: 40px; /* 最小宽度40px */
+            min-height: 40px; /* 最小高度40px */
+            max-width: 80px; /* 最大宽度80px */
+            max-height: 80px; /* 最大高度80px */
+
+            display: flex; /* 使用flex布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+
+            /* 创建白色边框效果，确保图标在二维码上清晰可见 */
+            box-shadow: 0 0 0 5px white; /* 向外扩散5px的白色阴影 */
+            z-index: 10; /* 确保图标显示在二维码上方 */
+        }
+
+        /* 图标样式 */
+        .qr-icon i {
+            font-size: 50%; /* 字体大小为容器大小的50% */
+            color: #000; /* 黑色图标 */
+        }
+
+        /* 自定义图片图标样式 */
+        .qr-icon img {
+            width: 70%; /* 图片宽度占容器的70% */
+            height: 70%; /* 图片高度占容器的70% */
+            object-fit: contain; /* 保持图片比例 */
+        }
+    </style>
+</head>
+<body>
+    <!-- 二维码容器 -->
+    <div class="qr-container">
+        <!-- 二维码将生成在这个div中 -->
+        <div id="qrcode"></div>
+
+        <!-- 中央图标 -->
+        <div class="qr-icon">
+            <!--
+                图标替换说明：
+                1. 使用Font Awesome图标（当前使用二维码图标）
+                2. 或使用自定义图片（注释掉<i>标签，取消注释<img>标签）
+            -->
+            <!-- <i class="fas fa-qrcode"></i> -->
+            <img src="C:\Users\18307\Pictures\airpods-4\1.jpg" alt="自定义图标">
+            <!--
+                使用自定义图片的示例（取消注释即可使用）：
+                <img src="https://via.placeholder.com/100" alt="自定义图标">
+            -->
+        </div>
+    </div>
+
+    <script>
+        // 当DOM内容加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取二维码容器元素
+            const qrcodeElement = document.getElementById('qrcode');
+
+            /**
+             * 生成随机字符串作为二维码值
+             * @returns {string} 随机生成的字符串
+             */
+            function generateRandomValue() {
+                // 可用的字符集（字母和数字）
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = ''; // 初始化结果字符串
+
+                // 生成长度在10到24之间的随机字符串
+                const length = Math.floor(Math.random() * 15) + 10; // 10-24个字符
+
+                // 循环生成每个字符
+                for (let i = 0; i < length; i++) {
+                    // 从字符集中随机选择一个字符并添加到结果中
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+
+                return result; // 返回生成的随机字符串
+            }
+
+            /**
+             * 生成二维码并显示在页面上
+             */
+            function generateQRCode() {
+                // 清除现有的二维码（如果有）
+                qrcodeElement.innerHTML = '';
+
+                // 获取二维码容器的实际宽度（已考虑最大最小尺寸限制）
+                const containerSize = document.querySelector('.qr-container').offsetWidth;
+
+                // 使用qrcode.js创建新的二维码
+                new QRCode(qrcodeElement, {
+                    text: generateRandomValue(), // 二维码内容（随机生成）
+                    width: containerSize, // 宽度等于容器宽度
+                    height: containerSize, // 高度等于容器宽度（保持正方形）
+                    colorDark: "#000000", // 二维码深色部分为黑色
+                    colorLight: "#ffffff", // 二维码浅色部分为白色
+                    correctLevel: QRCode.CorrectLevel.H // 最高容错级别
+                });
+            }
+
+            // 页面加载时首次生成二维码
+            generateQRCode();
+
+            // 监听窗口大小改变事件，当窗口大小变化时重新生成二维码
+            window.addEventListener('resize', generateQRCode);
+        });
+    </script>
+</body>
+</html>

@@ -8,10 +8,14 @@
 import os
 import time
 
-from fastapi import FastAPI, Response, Depends
+from fastapi import FastAPI, Request, Response, Depends, Query
 from contextlib import asynccontextmanager
 from Config.config_loader import initialize_config, public_config
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
+
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from math import ceil
 
 # 引用数据库异步操作模块
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
@@ -35,6 +39,8 @@ notify = FastAPI(
     redoc_url=None,
     openapi_url=None
 )
+
+templates = Jinja2Templates(directory="../templates")
 
 mysql_cfg = {
     "host": public_config.get(key="database.host", get_type=str),
@@ -80,6 +86,11 @@ async def lifespan(app: FastAPI):
 
 
 notify.router.lifespan_context = lifespan
+
+
+@notify.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("base.html", {"request": request})
 
 
 @notify.get("/mysql")
@@ -183,12 +194,50 @@ async def transfer_money(conn=Depends(get_mysql_conn)):
         return {"error": str(e)}
 
 
-@notify.get("/users")
-async def users(conn=Depends(get_mysql_conn)):
+@notify.get("/users", response_class=HTMLResponse)
+async def get_users(
+        request: Request,
+        page: int = Query(1, ge=1),
+        per_page: int = Query(10, ge=5, le=50),
+        conn=Depends(get_mysql_conn)
+):
+    offset = (page - 1) * per_page
     async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT id, username FROM users LIMIT 100")
-        rows = await cur.fetchall()
-        return rows
+        # 获取总记录数
+        await cur.execute("SELECT COUNT(*) AS total FROM users")
+        total_result = await cur.fetchone()
+        total_users = total_result['total']
+
+        # 计算总页数
+        total_pages = ceil(total_users / per_page)
+
+        # 获取当前页的用户数据
+        await cur.execute(
+            "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
+            (per_page, offset)
+        )
+        users = await cur.fetchall()
+
+    # 分页信息
+    pagination = {
+        "page": page,
+        "per_page": per_page,
+        "total_users": total_users,
+        "total_pages": total_pages,
+        "has_prev": page > 1,
+        "has_next": page < total_pages,
+        "prev_page": page - 1 if page > 1 else 1,
+        "next_page": page + 1 if page < total_pages else total_pages
+    }
+
+    return request.app.templates.TemplateResponse(
+        "users.html",
+        {
+            "request": request,
+            "users": users,
+            "pagination": pagination
+        }
+    )
 
 
 @notify.get("/Pay-RX_Notify")  # 测试接口
