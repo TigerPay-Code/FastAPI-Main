@@ -165,11 +165,13 @@ sys.path.append(project_root)
 # 构造配置文件路径
 config_path = os.path.join(project_root, 'config.ini')
 
+config = ConfigLoader
 
 def initialize_config():
     """
     根据当前操作系统更新配置文件。
     """
+    global config
     try:
         # 实例化 ConfigLoader 并加载配置文件
         config = ConfigLoader(config_path)
@@ -186,7 +188,7 @@ def initialize_config():
             system_name = "macOS"
 
         # 获取当前配置文件中的系统名称
-        current_system = config.get('software.system')
+        current_system = config.get(key='software.system',get_type=str)
 
         # 如果配置文件中的系统名称与当前系统不匹配，则进行更新
         if current_system != system_name:
@@ -194,13 +196,30 @@ def initialize_config():
             logger.warning("正在更新配置文件...")
 
             # 使用 set 方法更新值
-            config.set('software.system', system_name)
+            config.set(key='software.system', value=system_name)
 
             # 保存更改到文件
             config.save()
             logger.warning("配置文件已更新。")
         else:
             logger.warning(f"配置文件已是最新状态，系统名称为 '{system_name}'。")
+
+        # 硬件信息初始化
+        if not config.get(key='hardware.init',get_type=bool):
+            pass
+
+        # 软件信息初始化
+        if not config.get(key='software.init',get_type=bool):
+            pass
+
+        # 数据库信息初始化
+        if not config.get(key='database.init',get_type=bool):
+            pass
+
+        # Redis信息初始化
+        if not config.get(key='redis.init',get_type=bool):
+            pass
+
 
     except FileNotFoundError as e:
         logger.warning(f"错误：配置文件未找到，请检查路径。{e}")
