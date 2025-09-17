@@ -110,7 +110,16 @@ async def create_user(conn=Depends(get_mysql_conn)):
 @notify.get("/user/{user_id}")
 async def get_user(user_id: int, conn=Depends(get_mysql_conn)):
     async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT id, username, email FROM users WHERE id=%s", (user_id,))
+        await cur.execute("SELECT id, username, email, balance FROM users WHERE id=%s", (user_id,))
+        row = await cur.fetchone()
+    return {"user": row}
+
+
+# 查询数据 (查)
+@notify.get("/username/{user_name}")
+async def get_user(user_name: str, conn=Depends(get_mysql_conn)):
+    async with conn.cursor(aiomysql.DictCursor) as cur:
+        await cur.execute("SELECT id, username, email, balance FROM users WHERE username=%s", (user_name,))
         row = await cur.fetchone()
     return {"user": row}
 
