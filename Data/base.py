@@ -11,16 +11,17 @@ import hashlib
 import urllib.parse
 from typing import Dict, List, Any, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
 
 
 # 接收Pay-RX支付通知数据模型
 class Pay_RX_Notify_In_Data(BaseModel):
-    state: int = Field(title="代收状态", description="0-订单生成,1-支付中,2-支付成功,3-支付失败", default=0)
+    state: int = Field(title="代收状态", description="0-订单生成,1-支付中,2-支付成功,3-支付失败", default=0, ge=0, le=3)
     sysOrderNo: str = Field(title="平台订单号", description="系统订单号", min_length=4, max_length=36)
     mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
     amount: int = Field(title="金额", description="单位分", ge=1000, le=1000000)
-    extraField: Optional[str] = Field(title="扩展字段", description="可选字段", min_length=0, max_length=32, default=None)
+    extraField: Optional[str] = Field(title="扩展字段", description="可选字段", min_length=0, max_length=32,
+                                      default=None)
     sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
 
     # ========== 字段验证器 ==========
@@ -29,7 +30,9 @@ class Pay_RX_Notify_In_Data(BaseModel):
     def validate_state(cls, v: int) -> int:
         """验证状态值是否有效"""
         if v not in [0, 1, 2, 3]:
-            raise ValueError('状态值必须是 0-3 之间的整数')
+            raise ValueError(
+                f'无效状态码: {v}。'
+                '允许值: 0(订单生成), 1(支付中), 2(支付成功), 3(支付失败)')
         return v
 
     @field_validator('sysOrderNo', 'mchOrderNo')
@@ -44,8 +47,8 @@ class Pay_RX_Notify_In_Data(BaseModel):
     @classmethod
     def validate_sign_format(cls, v: str) -> str:
         """验证签名格式"""
-        if not re.match(r'^[A-F0-9]{32}$', v):
-            raise ValueError('签名必须是32位大写十六进制MD5值')
+        if not re.match(r'^[A-Z0-9]{32}$', v):
+            raise ValueError('签名必须是32位大写MD5值')
         return v
 
     @field_validator('amount')
@@ -85,10 +88,10 @@ class Pay_RX_Notify_In_Data(BaseModel):
         """
         # 步骤1：准备签名数据
         sign_data = {
-            "state": self.state,  # 使用枚举值（整数）
-            "sysOrderNo": self.sysOrderNo,
+            "amount": self.amount,
             "mchOrderNo": self.mchOrderNo,
-            "amount": self.amount
+            "state": self.state,  # 使用枚举值（整数）
+            "sysOrderNo": self.sysOrderNo
         }
 
         # 步骤2：按参数名ASCII码从小到大排序
@@ -167,3 +170,15 @@ class Pay_RX_Notify_Refund_Data(BaseModel):
     mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
     amount: int = Field(title="金额", description="单位分", ge=1, le=1000000)
     sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
+
+
+try:
+    data = Pay_RX_Notify_In_Data(
+        state=3,  # 无效值
+        sysOrderNo="ORD123456",
+        mchOrderNo="MCH987654",
+        amount=5000,
+        sign="A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6"
+    )
+except ValidationError as e:
+    print(e.errors())

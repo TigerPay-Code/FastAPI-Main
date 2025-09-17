@@ -9,9 +9,13 @@ import os
 from fastapi import FastAPI, Response
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 from Logger.logger_config import setup_logger
+from contextlib import asynccontextmanager
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
+
+success = Response(content="success", media_type="text/plain")
+ok = Response(content="ok", media_type="text/plain")
 
 notify = FastAPI(
     title="FastAPI Receive Pay Notify Service",
@@ -22,10 +26,15 @@ notify = FastAPI(
     openapi_url=None
 )
 
-success = Response(content="success", media_type="text/plain")
-ok = Response(content="ok", media_type="text/plain")
 
-logger.info("接收Pay-RX通知服务启动")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("接收Pay-RX通知服务启动")
+    yield
+    logger.info("接收Pay-RX通知服务关闭")
+
+
+notify.router.lifespan_context = lifespan
 
 
 @notify.get("/Pay-RX_Notify")  # 测试接口
