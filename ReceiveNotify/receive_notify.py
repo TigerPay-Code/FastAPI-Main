@@ -32,7 +32,7 @@ notify = FastAPI(
 async def lifespan(app: FastAPI):
     logger.info("接收Pay-RX通知服务启动")
     initialize_config()
-    logger.info(f"当前操作系统：{public_config.get('software.system')}")
+    logger.info(f"当前操作系统：{public_config.get(key='software.system', get_type=str)}")
     yield
     logger.info("接收Pay-RX通知服务关闭")
 

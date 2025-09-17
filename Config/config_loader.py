@@ -127,8 +127,12 @@ sys.path.append(project_root)
 # 构造配置文件路径
 config_path = os.path.join(project_root, 'config.ini')
 
-public_config = ConfigLoader
-
+try:
+    public_config = ConfigLoader(config_path)
+except FileNotFoundError as e:
+    logger.warning(f"错误：配置文件未找到，请检查路径。{e}")
+except Exception as e:
+    logger.warning(f"初始化配置时发生错误：{e}")
 
 def initialize_config():
     """
@@ -136,9 +140,6 @@ def initialize_config():
     """
     global public_config
     try:
-        # 实例化 ConfigLoader 并加载配置文件
-        public_config = ConfigLoader(config_path)
-
         # 检测操作系统
         os_name = sys.platform
         system_name = "Unknown"
@@ -186,7 +187,6 @@ def initialize_config():
         if not public_config.get(key='redis.init', get_type=bool):
             public_config.set(key='redis.init', value=True)
             public_config.save()
-
 
     except FileNotFoundError as e:
         logger.warning(f"错误：配置文件未找到，请检查路径。{e}")
