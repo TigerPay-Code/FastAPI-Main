@@ -11,7 +11,7 @@ import urllib
 import hashlib
 import urllib.parse
 from typing import Dict, List, Any, Optional
-from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
+from pydantic import BaseModel, Field, field_validator, model_validator
 from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))

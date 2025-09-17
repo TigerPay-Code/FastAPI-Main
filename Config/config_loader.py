@@ -1,5 +1,4 @@
 import os
-import json
 import configparser
 import sys
 
@@ -125,10 +124,10 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(project_root)
 
 # 构造配置文件路径
-config_path = os.path.join(project_root, 'config.ini')
+config_file = os.path.join(project_root, 'config.ini')
 
 try:
-    public_config = ConfigLoader(config_path)
+    public_config = ConfigLoader(config_file)
 except FileNotFoundError as e:
     logger.warning(f"错误：配置文件未找到，请检查路径。{e}")
 except Exception as e:
@@ -188,7 +187,7 @@ def initialize_config():
             public_config.set(key='redis.init', value=True)
             public_config.save()
 
-    except FileNotFoundError as e:
-        logger.warning(f"错误：配置文件未找到，请检查路径。{e}")
-    except Exception as e:
-        logger.warning(f"初始化配置时发生错误：{e}")
+    except FileNotFoundError as init_file_error:
+        logger.warning(f"错误：配置文件未找到，请检查路径。{init_file_error}")
+    except Exception as init_error:
+        logger.warning(f"初始化配置时发生错误：{init_error}")
