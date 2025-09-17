@@ -1,7 +1,10 @@
 ### AL ###
 #Template for AL projects for Dynamics 365 Business Central
 #launch.json folder
-
+**/__pycache__/
+Config/config.ini
+Config/测试/
+ReceiveNotify/抗压测试/
 .idea/
 venv/
 .vscode/
