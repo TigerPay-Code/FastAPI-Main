@@ -41,8 +41,9 @@ notify = FastAPI(
     openapi_url=None
 )
 
-templates = Jinja2Templates(directory="templates")
 notify.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+notify.templates = templates
 
 mysql_cfg = {
     "host": public_config.get(key="database.host", get_type=str),
