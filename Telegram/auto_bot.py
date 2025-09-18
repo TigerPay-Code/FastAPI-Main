@@ -17,20 +17,13 @@ from Logger.logger_config import setup_logger
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
-bot = telebot.TeleBot(token=public_config.get(key='telegram.token', get_type=str), parse_mode=None)
-
-
-def send_telegram_message(message: str):
-    global bot
-    try:
-        bot.send_message(chat_id=public_config.get(key='telegram.chat_id', get_type=str), text=message)
-    except Exception as e:
-        logger.error(f"send_telegram_message error: {e}")
+bot = telebot
 
 
 # 启动Telegram机器人
 def start_telegram_bot():
     global bot
+    bot = telebot.TeleBot(token=public_config.get(key='telegram.token', get_type=str), parse_mode=None)
     bot.delete_my_commands(scope=None, language_code=None)
 
     commands_list = [
@@ -42,3 +35,11 @@ def start_telegram_bot():
         ("ctc", "查询充值、提现统计"),
         ("usdt", "发送USDT充值地址和图片")
     ]
+
+
+def send_telegram_message(message: str):
+    global bot
+    try:
+        bot.send_message(chat_id=public_config.get(key='telegram.chat_id', get_type=str), text=message)
+    except Exception as e:
+        logger.error(f"send_telegram_message error: {e}")

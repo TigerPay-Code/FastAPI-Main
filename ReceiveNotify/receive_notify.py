@@ -5,6 +5,7 @@
 # @Time      : 2025/9/15 17:47
 # @IDE       : PyCharm
 # @Function  : 接收支付通知 （global_pay_in_notify 代收通知，global_pay_out_notify 代付通知，global_refund_notify 退款通知）
+import json
 import os
 import time
 
@@ -74,8 +75,17 @@ async def lifespan_manager(app: FastAPI):
 
     logger.info(f"正在启动Redis连接池...")
     await redis_manager.init_pool(**redis_cfg)
-    logger.info("接收Pay-RX通知服务开启")
 
+    # 启动 Telegram 机器人（如果启用）
+    if public_config.get(key='telegram.enable', get_type=bool):
+        logger.info("正在启动 Telegram 机器人...")
+        # 使用线程启动 Telegram 机器人
+        bot_thread = threading.Thread(target=start_telegram_bot)
+        bot_thread.daemon = True  # 设置为守护线程，确保主进程退出时线程也会退出
+        bot_thread.start()
+        logger.info("Telegram 机器人线程已启动")
+
+    logger.info("接收Pay-RX通知服务开启")
     send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
 
     yield
@@ -86,6 +96,7 @@ async def lifespan_manager(app: FastAPI):
     await redis_manager.close()
 
     logger.info("接收Pay-RX通知服务关闭")
+    send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
 
 
 notify = FastAPI(
@@ -214,24 +225,40 @@ async def get_users(
         request: Request,
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=5, le=100),
-        conn=Depends(get_mysql_conn)
+        conn=Depends(get_mysql_conn),
+        redis=Depends(get_redis)
 ):
+    # 计算偏移量
     offset = (page - 1) * per_page
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        # 获取总记录数
-        await cur.execute("SELECT COUNT(*) AS total FROM users")
-        total_result = await cur.fetchone()
-        total_users = total_result['total']
 
-        # 计算总页数
-        total_pages = ceil(total_users / per_page)
+    # 从缓存中获取数据
+    cache_key = "all_users_list_cache"
+    cached_data = await redis.get(cache_key)
 
-        # 获取当前页的用户数据
-        await cur.execute(
-            "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
-            (per_page, offset)
-        )
-        users = await cur.fetchall()
+    if cached_data:
+        # 如果缓存命中，则直接返回
+        users = json.loads(cached_data)
+        source = "cache"
+    else:
+
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            # 获取总记录数
+            await cur.execute("SELECT COUNT(*) AS total FROM users")
+            total_result = await cur.fetchone()
+            total_users = total_result['total']
+
+            # 计算总页数
+            total_pages = ceil(total_users / per_page)
+
+            # 获取当前页的用户数据
+            await cur.execute(
+                "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
+                (per_page, offset)
+            )
+            users = await cur.fetchall()
+
+            await redis.set(cache_key, json.dumps(users), ex=60)
+            source = "database"
 
     # 分页信息
     pagination = {
@@ -281,9 +308,3 @@ async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
 async def handle_global_refund_notify(notify_refund_data: Pay_RX_Notify_Refund_Data):
     logger.info(f"收到 【退款】 通知：数据：{notify_refund_data}")
     return success
-
-
-if __name__ == '__main__':
-    if public_config.get(key='telegram.enable', get_type=bool):
-        # 启动Telegram机器人线程
-        bot_thread = threading.Thread(target=start_telegram_bot)
