@@ -5,12 +5,20 @@
 # @Time      : 2025/9/18 11:58
 # @IDE       : PyCharm
 # @Function  :
+import json
 import os
 
 import telebot  # pip3 install --upgrade pyTelegramBotAPI
 
+
 # 引入配置文件
 from Config.config_loader import public_config
+
+# 引用数据库异步操作模块
+from DataBase.async_mysql import mysql_manager, get_mysql_conn
+from DataBase.async_redis import redis_manager, get_redis
+import aiomysql
+from fastapi import Depends
 
 # 引用日志模块
 from Logger.logger_config import setup_logger
@@ -54,13 +62,36 @@ else:
     logger.info("Telegram bot started successfully.")
 
 
-def send_telegram_message(message: str):
+async def send_telegram_message(message: str):
     global bot
 
-    try:
-        bot.send_message(chat_id=public_config.get(key='telegram.chat_id', get_type=str), text=message)
-    except Exception as aa:
-        logger.error(f"send_telegram_message error: {aa}")
+    if bot:
+        try:
+            conn = await get_mysql_conn()
+            redis = await get_redis()
+
+            cache_key = "send_telegram_message_to_admin"
+            cached_data = await redis.get(cache_key)
+
+            if cached_data:
+                # 如果缓存命中，则直接返回
+                admin_chat_id = json.loads(cached_data)
+            else:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
+                    admin_chat_id = await cur.fetchall()
+
+                    # 将数据存入缓存，设置过期时间为 1 小时（3600 秒）
+                    await redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
+
+            for chat_id in admin_chat_id:
+                if chat_id['chat_id']:
+                    bot.send_message(chat_id=chat_id['chat_id'], text=message)
+            logger.info(f"send message to telegram admin success, message: {message}")
+        except Exception as aa:
+            logger.error(f"send_telegram_message error: {aa}")
+    else:
+        logger.error("Telegram bot not started.")
 
 
 if __name__ == "__main__":

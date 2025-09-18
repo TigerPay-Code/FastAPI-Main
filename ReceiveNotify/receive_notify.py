@@ -91,7 +91,7 @@ async def lifespan_manager(app: FastAPI):
 
     logger.info("接收Pay-RX通知服务开启")
     if public_config and public_config.get(key='telegram.enable', get_type=bool):
-        send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
+        await send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
 
     yield
 
@@ -102,7 +102,7 @@ async def lifespan_manager(app: FastAPI):
 
     logger.info("接收Pay-RX通知服务关闭")
     if public_config and public_config.get(key='telegram.enable', get_type=bool):
-        send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
+        await send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
 
 
 notify = FastAPI(
@@ -251,7 +251,6 @@ async def get_users(
     if cached_data:
         # 如果缓存命中，则直接返回
         users = json.loads(cached_data)
-        source = "cache"
 
         # 即使缓存命中，也需要获取总记录数用于分页
         async with conn.cursor(aiomysql.DictCursor) as cur:
@@ -274,7 +273,6 @@ async def get_users(
             users = await cur.fetchall()
 
             await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
-            source = "database"
 
     # 计算总页数
     total_pages = ceil(total_users / per_page)
