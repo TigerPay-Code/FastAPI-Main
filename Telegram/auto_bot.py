@@ -16,6 +16,7 @@ from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
+
 bot = telebot.TeleBot(token=public_config.get(key='telegram.token', get_type=str), parse_mode=None)
 
 
@@ -24,6 +25,7 @@ def send_telegram_message(message: str):
         bot.send_message(chat_id=public_config.get(key='telegram.chat_id', get_type=str), text=message)
     except Exception as e:
         logger.error(f"send_telegram_message error: {e}")
+
 
 def start_telegram_bot():
     global bot
