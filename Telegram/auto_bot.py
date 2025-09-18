@@ -33,7 +33,7 @@ except Exception as e:
 
 
 @bot.message_handler(commands=['id'])
-def handler_bxs(message):
+def gei_chat_id(message):
     bot.reply_to(message, f"{message.chat.id}")
 
 
@@ -53,7 +53,7 @@ def start_telegram_bot():
             try:
                 com_set.append(BotCommand(command=com, description=desc))
             except Exception as e:
-                print(f"添加命令 {com} 时发生错误: {e}")
+                logger.error(f"添加命令 {com} 时发生错误: {e}")
 
         bot.set_my_commands(commands=com_set)
 
@@ -74,13 +74,13 @@ def start_telegram_bot():
                 restart_on_change=True
             )
         except KeyboardInterrupt:
-            print("收到终止信号，正在优雅关闭机器人...")
+            logger.error("收到终止信号，正在优雅关闭机器人...")
         except telebot.apihelper.ApiException as api_error:
-            print(f"Telegram API 错误: {api_error}")
+            logger.error(f"Telegram API 错误: {api_error}")
         except Exception as e:
-            print(f"机器人运行时发生错误: {str(e)}")
+            logger.error(f"机器人运行时发生错误: {str(e)}")
         finally:
-            print("机器人已停止运行")
+            logger.error("机器人已停止运行")
     else:
         logger.error("Telegram机器人未初始化，无法启动")
 
