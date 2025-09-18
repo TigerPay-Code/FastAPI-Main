@@ -201,7 +201,7 @@ async def transfer_money(conn=Depends(get_mysql_conn)):
 async def get_users(
         request: Request,
         page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=5, le=50),
+        per_page: int = Query(10, ge=5, le=100),
         conn=Depends(get_mysql_conn)
 ):
     offset = (page - 1) * per_page
