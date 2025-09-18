@@ -71,18 +71,18 @@ async def send_telegram_message(message: str):
             redis = get_redis()
 
             cache_key = "send_telegram_message_to_admin"
-            cached_data = redis.get(cache_key)
+            cached_data = await redis.get(cache_key)
 
             if cached_data:
                 # 如果缓存命中，则直接返回
                 admin_chat_id = json.loads(cached_data)
             else:
-                with conn.cursor(aiomysql.DictCursor) as cur:
-                    cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
-                    admin_chat_id = cur.fetchall()
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
+                    admin_chat_id = await cur.fetchall()
 
                     # 将数据存入缓存，设置过期时间为 1 小时（3600 秒）
-                    redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
+                    await redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
 
             for chat_id in admin_chat_id:
                 if chat_id['chat_id']:
@@ -92,7 +92,3 @@ async def send_telegram_message(message: str):
             logger.error(f"send_telegram_message error: {aa}")
     else:
         logger.error("Telegram bot not started.")
-
-
-if __name__ == "__main__":
-    send_telegram_message("hello world")
