@@ -64,20 +64,24 @@ async def send_telegram_message(message: str):
     global bot
 
     if bot:
+        conn = None  # 初始化 conn
+        redis = None # 初始化 redis
         try:
-            # 使用 async with 正确处理异步生成器
-            async with get_mysql_conn() as conn:
-                async with get_redis() as redis:
-                    cache_key = "send_telegram_message_to_admin"
-                    cached_data = await redis.get(cache_key)
+            # 直接从连接池管理器获取连接
+            conn = await mysql_manager.acquire()
+            # 直接使用 redis_manager 的 client 属性
+            redis = redis_manager.client
 
-                    if cached_data:
-                        admin_chat_id = json.loads(cached_data)
-                    else:
-                        async with conn.cursor(aiomysql.DictCursor) as cur:
-                            await cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
-                            admin_chat_id = await cur.fetchall()
-                            await redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
+            cache_key = "send_telegram_message_to_admin"
+            cached_data = await redis.get(cache_key)
+
+            if cached_data:
+                admin_chat_id = json.loads(cached_data)
+            else:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
+                    admin_chat_id = await cur.fetchall()
+                    await redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
 
             for chat_id in admin_chat_id:
                 if chat_id['chat_id']:
@@ -85,5 +89,9 @@ async def send_telegram_message(message: str):
             logger.info(f"发送Telegram消息成功, 消息内容: {message}")
         except Exception as aa:
             logger.error(f"发送Telegram消息失败: 错误信息: {aa}")
+        finally:
+            if conn:
+                # 确保连接在 finally 块中被释放
+                await mysql_manager.release(conn)
     else:
         logger.error("Telegram机器人未初始化，无法发送消息")
