@@ -21,12 +21,14 @@ bot = telebot.TeleBot(token=public_config.get(key='telegram.token', get_type=str
 
 
 def send_telegram_message(message: str):
+    global bot
     try:
         bot.send_message(chat_id=public_config.get(key='telegram.chat_id', get_type=str), text=message)
     except Exception as e:
         logger.error(f"send_telegram_message error: {e}")
 
 
+# 启动Telegram机器人
 def start_telegram_bot():
     global bot
     bot.delete_my_commands(scope=None, language_code=None)

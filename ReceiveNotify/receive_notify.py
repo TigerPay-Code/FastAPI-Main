@@ -9,7 +9,7 @@ import os
 import time
 
 from fastapi import FastAPI, Request, Response, Depends, Query
-from contextlib import asynccontextmanager
+
 from Config.config_loader import initialize_config, public_config
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 
@@ -18,8 +18,14 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from math import ceil
 
+# 引用多线程模块
+import threading
+
+# 引用生命期管理器模块
+from contextlib import asynccontextmanager
+
 # 引用发送Telegram消息模块
-from Telegram.auto_bot import send_telegram_message
+from Telegram.auto_bot import send_telegram_message, start_telegram_bot
 
 # 引用数据库异步操作模块
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
@@ -34,19 +40,6 @@ logger = setup_logger(log_name)
 
 success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
-
-notify = FastAPI(
-    title="FastAPI Receive Pay Notify Service",
-    description="接收Pay-RX通知服务",
-    version="1.0.0",
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None
-)
-
-notify.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-notify.templates = templates
 
 mysql_cfg = {
     "host": public_config.get(key="database.host", get_type=str),
@@ -66,8 +59,9 @@ redis_cfg = {
 }
 
 
+# 应用生命周期事件
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan_manager(app: FastAPI):
     logger.info(f"当前操作系统：{public_config.get(key='software.system', get_type=str)}")
 
     logger.info(f"服务名称：{app.openapi()['info']['title']}")
@@ -94,7 +88,19 @@ async def lifespan(app: FastAPI):
     logger.info("接收Pay-RX通知服务关闭")
 
 
-notify.router.lifespan_context = lifespan
+notify = FastAPI(
+    title="FastAPI Receive Pay Notify Service",
+    description="接收Pay-RX通知服务",
+    version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    lifespan=lifespan_manager
+)
+
+notify.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+notify.templates = templates
 
 
 @notify.get("/", response_class=HTMLResponse)
@@ -275,3 +281,9 @@ async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
 async def handle_global_refund_notify(notify_refund_data: Pay_RX_Notify_Refund_Data):
     logger.info(f"收到 【退款】 通知：数据：{notify_refund_data}")
     return success
+
+
+if __name__ == '__main__':
+    if public_config.get(key='telegram.enable', get_type=bool):
+        # 启动Telegram机器人线程
+        bot_thread = threading.Thread(target=start_telegram_bot)
