@@ -130,8 +130,10 @@ try:
     public_config = ConfigLoader(config_file)
 except FileNotFoundError as e:
     logger.warning(f"错误：配置文件未找到，请检查路径。{e}")
+    public_config = None
 except Exception as e:
     logger.warning(f"初始化配置时发生错误：{e}")
+    public_config = None
 
 def initialize_config():
     """

@@ -79,16 +79,19 @@ async def lifespan_manager(app: FastAPI):
     await redis_manager.init_pool(**redis_cfg)
 
     # 启动 Telegram 机器人（如果启用）
-    if public_config.get(key='telegram.enable', get_type=bool):
+    if public_config and public_config.get(key='telegram.enable', get_type=bool):
         logger.info("正在启动 Telegram 机器人...")
         # 使用线程启动 Telegram 机器人
         bot_thread = threading.Thread(target=start_telegram_bot)
         bot_thread.daemon = True  # 设置为守护线程，确保主进程退出时线程也会退出
         bot_thread.start()
         logger.info("Telegram 机器人线程已启动")
+    else:
+        logger.info("启动 Telegram 机器人 失败！ (请检查配置文件中 telegram.enable 是否为 True)")
 
     logger.info("接收Pay-RX通知服务开启")
-    send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
+    if public_config and public_config.get(key='telegram.enable', get_type=bool):
+        send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
 
     yield
 
@@ -98,7 +101,8 @@ async def lifespan_manager(app: FastAPI):
     await redis_manager.close()
 
     logger.info("接收Pay-RX通知服务关闭")
-    send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
+    if public_config and public_config.get(key='telegram.enable', get_type=bool):
+        send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
 
 
 notify = FastAPI(
