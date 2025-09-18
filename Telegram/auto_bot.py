@@ -10,7 +10,6 @@ import os
 
 import telebot  # pip3 install --upgrade pyTelegramBotAPI
 
-
 # 引入配置文件
 from Config.config_loader import public_config
 
@@ -66,22 +65,19 @@ async def send_telegram_message(message: str):
 
     if bot:
         try:
-            conn = await get_mysql_conn()
-            redis = await get_redis()
+            # 使用 async with 正确处理异步生成器
+            async with get_mysql_conn() as conn:
+                async with get_redis() as redis:
+                    cache_key = "send_telegram_message_to_admin"
+                    cached_data = await redis.get(cache_key)
 
-            cache_key = "send_telegram_message_to_admin"
-            cached_data = await redis.get(cache_key)
-
-            if cached_data:
-                # 如果缓存命中，则直接返回
-                admin_chat_id = json.loads(cached_data)
-            else:
-                async with conn.cursor(aiomysql.DictCursor) as cur:
-                    await cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
-                    admin_chat_id = await cur.fetchall()
-
-                    # 将数据存入缓存，设置过期时间为 1 小时（3600 秒）
-                    await redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
+                    if cached_data:
+                        admin_chat_id = json.loads(cached_data)
+                    else:
+                        async with conn.cursor(aiomysql.DictCursor) as cur:
+                            await cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
+                            admin_chat_id = await cur.fetchall()
+                            await redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
 
             for chat_id in admin_chat_id:
                 if chat_id['chat_id']:
