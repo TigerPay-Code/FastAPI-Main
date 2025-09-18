@@ -64,12 +64,11 @@ async def send_telegram_message(message: str):
     global bot
 
     if bot:
-        conn = None  # 初始化 conn
-        redis = None # 初始化 redis
+        conn = None
+        redis = None
         try:
-            # 直接从连接池管理器获取连接
+            # 直接从管理器获取连接和客户端
             conn = await mysql_manager.acquire()
-            # 直接使用 redis_manager 的 client 属性
             redis = redis_manager.client
 
             cache_key = "send_telegram_message_to_admin"
@@ -91,7 +90,6 @@ async def send_telegram_message(message: str):
             logger.error(f"发送Telegram消息失败: 错误信息: {aa}")
         finally:
             if conn:
-                # 确保连接在 finally 块中被释放
                 await mysql_manager.release(conn)
     else:
         logger.error("Telegram机器人未初始化，无法发送消息")
