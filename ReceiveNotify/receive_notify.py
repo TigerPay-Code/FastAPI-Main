@@ -8,6 +8,8 @@
 import json
 import os
 import time
+import json
+from datetime import datetime
 
 from fastapi import FastAPI, Request, Response, Depends, Query
 
@@ -112,6 +114,13 @@ notify = FastAPI(
 notify.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 notify.templates = templates
+
+
+def datetime_serializer(obj):
+    """自定义序列化函数，处理datetime对象"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
 
 
 @notify.get("/", response_class=HTMLResponse)
@@ -257,7 +266,7 @@ async def get_users(
             )
             users = await cur.fetchall()
 
-            await redis.set(cache_key, json.dumps(users), ex=60)
+            await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
             source = "database"
 
     # 分页信息
