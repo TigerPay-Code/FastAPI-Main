@@ -9,6 +9,7 @@ import json
 import os
 
 import telebot  # pip3 install --upgrade pyTelegramBotAPI
+from telebot.types import BotCommand
 
 # 引入配置文件
 from Config.config_loader import public_config
@@ -31,12 +32,57 @@ except Exception as e:
     bot = None
 
 
+@bot.message_handler(commands=['id'])
+def handler_bxs(message):
+    bot.reply_to(message, f"{message.chat.id}")
+
+
 # 启动Telegram机器人
 def start_telegram_bot():
     global bot
 
     if bot:
         bot.delete_my_commands(scope=None, language_code=None)
+
+        commands_list = [
+            ("id", "查询聊天ID")
+        ]
+
+        com_set = []
+        for com, desc in commands_list:
+            try:
+                com_set.append(BotCommand(command=com, description=desc))
+            except Exception as e:
+                print(f"添加命令 {com} 时发生错误: {e}")
+
+        bot.set_my_commands(commands=com_set)
+
+        try:
+            bot.infinity_polling(
+                skip_pending=True,  # 跳过未处理的消息
+                interval=1,  # 降低轮询间隔到 1 秒，提高响应速度
+                timeout=20,  # 减少单次轮询超时时间，提高响应效率
+                long_polling_timeout=20,  # 减少长轮询超时时间
+                allowed_updates=[  # 明确指定需要处理的更新类型
+                    "message",
+                    "callback_query"
+                    # "edited_message",
+                    # "my_chat_member",  # 添加成员状态更新，用于检测机器人被添加/删除
+                    # "chat_member"  # 添加群组成员变动监控
+                ],
+                none_stop=True,  # 发生错误时继续运行
+                restart_on_change=True
+            )
+        except KeyboardInterrupt:
+            print("收到终止信号，正在优雅关闭机器人...")
+        except telebot.apihelper.ApiException as api_error:
+            print(f"Telegram API 错误: {api_error}")
+        except Exception as e:
+            print(f"机器人运行时发生错误: {str(e)}")
+        finally:
+            print("机器人已停止运行")
+    else:
+        logger.error("Telegram机器人未初始化，无法启动")
 
 
 if public_config and public_config.get(key='software.system', get_type=str) == 'windows':
