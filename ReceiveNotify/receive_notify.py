@@ -262,9 +262,6 @@ async def get_users(
             total_result = await cur.fetchone()
             total_users = total_result['total']
 
-            # 计算总页数
-            total_pages = ceil(total_users / per_page)
-
             # 获取当前页的用户数据
             await cur.execute(
                 "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
@@ -274,6 +271,9 @@ async def get_users(
 
             await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
             source = "database"
+
+    # 计算总页数
+    total_pages = ceil(total_users / per_page)
 
     # 分页信息
     pagination = {
