@@ -5,7 +5,7 @@
 # @Time      : 2025/9/15 17:47
 # @IDE       : PyCharm
 # @Function  : 接收支付通知 （global_pay_in_notify 代收通知，global_pay_out_notify 代付通知，global_refund_notify 退款通知）
-import json
+
 import os
 import time
 import json
@@ -93,16 +93,17 @@ async def lifespan_manager(app: FastAPI):
     if public_config and public_config.get(key='telegram.enable', get_type=bool):
         await send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
 
+    # 应用生命周期结束时执行
     yield
+
+    logger.info("接收Pay-RX通知服务关闭")
+    if public_config and public_config.get(key='telegram.enable', get_type=bool):
+        await send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
 
     logger.info(f"正在关闭数据库连接池...")
     await mysql_manager.close()
     logger.info(f"正在关闭Redis连接池...")
     await redis_manager.close()
-
-    logger.info("接收Pay-RX通知服务关闭")
-    if public_config and public_config.get(key='telegram.enable', get_type=bool):
-        await send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
 
 
 notify = FastAPI(
@@ -247,6 +248,8 @@ async def get_users(
     # 从缓存中获取数据
     cache_key = "all_users_list_cache"
     cached_data = await redis.get(cache_key)
+
+    users = None
 
     if cached_data:
         # 如果缓存命中，则直接返回

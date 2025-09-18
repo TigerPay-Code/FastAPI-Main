@@ -14,10 +14,9 @@ import telebot  # pip3 install --upgrade pyTelegramBotAPI
 from Config.config_loader import public_config
 
 # 引用数据库异步操作模块
-from DataBase.async_mysql import mysql_manager, get_mysql_conn
-from DataBase.async_redis import redis_manager, get_redis
+from DataBase.async_mysql import mysql_manager
+from DataBase.async_redis import redis_manager
 import aiomysql
-from fastapi import Depends
 
 # 引用日志模块
 from Logger.logger_config import setup_logger
@@ -39,15 +38,7 @@ def start_telegram_bot():
     if bot:
         bot.delete_my_commands(scope=None, language_code=None)
 
-    commands_list = [
-        ("bxs", "查询半小时 代收、代付"),
-        ("yxs", "查询一小时 代收、代付"),
-        ("wdf", "查询所有未代付的订单"),
-        ("td", "设置通道开关"),
-        ("sh", "查看商户信息"),
-        ("ctc", "查询充值、提现统计"),
-        ("usdt", "发送USDT充值地址和图片")
-    ]
+
 
 
 if public_config and public_config.get(key='software.system', get_type=str) == 'windows':
@@ -65,7 +56,6 @@ async def send_telegram_message(message: str):
 
     if bot:
         conn = None
-        redis = None
         try:
             # 直接从管理器获取连接和客户端
             conn = await mysql_manager.acquire()
@@ -73,6 +63,8 @@ async def send_telegram_message(message: str):
 
             cache_key = "send_telegram_message_to_admin"
             cached_data = await redis.get(cache_key)
+
+            admin_chat_id = None
 
             if cached_data:
                 admin_chat_id = json.loads(cached_data)
