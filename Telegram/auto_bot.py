@@ -39,8 +39,6 @@ def start_telegram_bot():
         bot.delete_my_commands(scope=None, language_code=None)
 
 
-
-
 if public_config and public_config.get(key='software.system', get_type=str) == 'windows':
     # 初始化Telegram机器人
     start_telegram_bot()
