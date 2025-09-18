@@ -248,8 +248,14 @@ async def get_users(
         # 如果缓存命中，则直接返回
         users = json.loads(cached_data)
         source = "cache"
-    else:
 
+        # 即使缓存命中，也需要获取总记录数用于分页
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT COUNT(*) AS total FROM users")
+            total_result = await cur.fetchone()
+            total_users = total_result['total']
+    else:
+        # 如果缓存未命中，则从数据库中获取数据
         async with conn.cursor(aiomysql.DictCursor) as cur:
             # 获取总记录数
             await cur.execute("SELECT COUNT(*) AS total FROM users")
