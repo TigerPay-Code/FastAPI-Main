@@ -38,7 +38,7 @@ def gei_chat_id(message):
 
 
 # 启动Telegram机器人
-def start_telegram_bot():
+async def start_telegram_bot():
     global bot
 
     if bot:
