@@ -18,6 +18,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from math import ceil
 
+# 引用发送Telegram消息模块
+from Telegram.auto_bot import send_telegram_message
+
 # 引用数据库异步操作模块
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
 from DataBase.async_redis import redis_manager, get_redis
@@ -77,6 +80,9 @@ async def lifespan(app: FastAPI):
 
     logger.info(f"正在启动Redis连接池...")
     await redis_manager.init_pool(**redis_cfg)
+    logger.info("接收Pay-RX通知服务开启")
+
+    send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
 
     yield
 
