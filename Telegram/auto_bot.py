@@ -10,6 +10,7 @@ import os
 
 import telebot  # pip3 install --upgrade pyTelegramBotAPI
 from telebot.types import BotCommand
+import threading
 
 # 引入配置文件
 from Config.config_loader import public_config
@@ -25,21 +26,29 @@ from Logger.logger_config import setup_logger
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
-try:
-    bot = telebot.TeleBot(token=public_config.get(key='telegram.token', get_type=str), parse_mode=None)
-except Exception as e:
-    logger.error(f"初始化Telegram机器人失败: {e}")
-    bot = None
-
-
-@bot.message_handler(commands=['id'])
-def gei_chat_id(message):
-    bot.reply_to(message, f"{message.chat.id}")
+bot_instance = None
 
 
 # 启动Telegram机器人
 async def start_telegram_bot():
-    global bot
+    global bot_instance
+
+    try:
+        token = public_config.get(key='telegram.token', get_type=str)
+        if not token:
+            logger.error("Telegram token 未配置")
+            return
+
+        # 创建 bot 实例
+        bot = telebot.TeleBot(
+            token=public_config.get(key='telegram.token', get_type=str),
+            parse_mode=None
+        )
+
+        bot_instance = bot
+    except Exception as e:
+        logger.error(f"初始化Telegram机器人失败: {e}")
+        return
 
     if bot:
         bot.delete_my_commands(scope=None, language_code=None)
@@ -95,10 +104,16 @@ else:
     logger.info("初始化Telegram机器人成功")
 
 
-async def send_telegram_message(message: str):
-    global bot
+@bot_instance.message_handler(commands=['id'])
+def gei_chat_id(message):
+    global bot_instance
+    bot_instance.reply_to(message, f"{message.chat.id}")
 
-    if bot:
+
+async def send_telegram_message(message: str):
+    global bot_instance
+
+    if bot_instance:
         conn = None
         try:
             # 直接从管理器获取连接和客户端
@@ -120,7 +135,7 @@ async def send_telegram_message(message: str):
 
             for chat_id in admin_chat_id:
                 if chat_id['chat_id']:
-                    bot.send_message(chat_id=chat_id['chat_id'], text=message)
+                    bot_instance.send_message(chat_id=chat_id['chat_id'], text=message)
             logger.info(f"发送Telegram消息成功, 消息内容: {message}")
         except Exception as aa:
             logger.error(f"发送Telegram消息失败: 错误信息: {aa}")
