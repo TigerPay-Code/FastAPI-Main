@@ -32,6 +32,7 @@ bot = None
 bot_initialized = False  # 添加初始化状态标志
 
 try:
+    logger.info("正在加载 Telegram token...")
     token = public_config.get("telegram", "token", get_type=str, default='')
     logger.info(f"加载 Telegram token 成功，token: {token[:4]}****")
     if token and isinstance(token, str) and token.strip():
