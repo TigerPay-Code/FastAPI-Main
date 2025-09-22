@@ -21,14 +21,11 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from math import ceil
 
-# 引用多线程模块
-import threading
-
 # 引用生命期管理器模块
 from contextlib import asynccontextmanager
 
 # 引用发送Telegram消息模块
-from Telegram.auto_bot import send_telegram_message, start_telegram_bot
+from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
 
 # 引用数据库异步操作模块
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
@@ -81,10 +78,7 @@ async def lifespan_manager(app: FastAPI):
     # 启动 Telegram 机器人（如果启用）
     if public_config and public_config.get(key='telegram.enable', get_type=bool):
         logger.info("正在启动 Telegram 机器人...")
-        # 使用线程启动 Telegram 机器人
-        bot_thread = threading.Thread(target=start_telegram_bot)
-        bot_thread.daemon = True  # 设置为守护线程，确保主进程退出时线程也会退出
-        bot_thread.start()
+        start_bot()
         logger.info("Telegram 机器人线程已启动")
     else:
         logger.info("启动 Telegram 机器人 失败！ (请检查配置文件中 telegram.enable 是否为 True)")
@@ -104,6 +98,9 @@ async def lifespan_manager(app: FastAPI):
     await mysql_manager.close()
     logger.info(f"正在关闭Redis连接池...")
     await redis_manager.close()
+
+    # 停止 Telegram 机器人
+    stop_bot()
 
 
 notify = FastAPI(
