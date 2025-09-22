@@ -149,8 +149,8 @@ def start_bot():
     for com, desc in commands_list:
         try:
             com_set.append(BotCommand(command=com, description=desc))
-        except Exception as err:
-            print(f"添加命令 {com} 时发生错误: {err}")
+        except Exception as er:
+            print(f"添加命令 {com} 时发生错误: {er}")
 
     bot.set_my_commands(commands=com_set)
 
@@ -293,5 +293,5 @@ if bot_initialized:
                     msg = f"📛 {operator} 更新了头衔: {old_display} → {new_display}"
                     bot.send_message(update.chat.id, msg)
 
-        except Exception as err:
-            print(f"处理管理员变更出错: {err}")
+        except Exception as t_err:
+            print(f"处理管理员变更出错: {t_err}")
