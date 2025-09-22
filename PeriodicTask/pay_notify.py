@@ -43,7 +43,9 @@ def start_periodic_task():
     """
     启动周期性任务调度器。
     """
-    push_msg_thread = threading.Thread(target=start_check_balance_task).start()
+    logger.info('启动周期性任务调度器。')
+    if  not push_msg_thread:
+        push_msg_thread = threading.Thread(target=start_check_balance_task).start()
 
 
 def stop_periodic_task():
