@@ -204,7 +204,8 @@ async def send_telegram_message(message: str):
                         async with conn.cursor(aiomysql.DictCursor) as cur:
                             await cur.execute("SELECT `chat_id` FROM `telegram_users` ORDER BY `chat_id`")
                             result = await cur.fetchall()
-                            admin_chat_ids = [row['chat_id'] for row in result] if result else []
+                            # 修正：提取chat_id值而不是整个字典
+                            admin_chat_ids = [str(row['chat_id']) for row in result] if result else []
 
                             # 缓存到Redis
                             await redis.set(cache_key, json.dumps(admin_chat_ids), ex=3600)
@@ -213,13 +214,14 @@ async def send_telegram_message(message: str):
                 success_count = 0
                 for chat_id in admin_chat_ids:
                     try:
-                        bot.send_message(chat_id=chat_id, text=message)
+                        # 确保chat_id是字符串或数字
+                        bot.send_message(chat_id=str(chat_id), text=message)
                         success_count += 1
+                        logger.debug(f"消息成功发送到 chat_id: {chat_id}")
                     except Exception as e:
                         logger.error(f"发送消息到 chat_id {chat_id} 失败: {e}")
 
-                logger.info(
-                    f"成功发送Telegram消息到 {success_count}/{len(admin_chat_ids)} 个管理员，消息内容: {message}")
+                logger.info(f"成功发送Telegram消息到 {success_count}/{len(admin_chat_ids)} 个管理员，消息内容: {message}")
 
         except Exception as e:
             logger.error(f"发送Telegram消息失败: {e}")
