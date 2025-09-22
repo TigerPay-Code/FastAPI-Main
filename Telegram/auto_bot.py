@@ -9,6 +9,9 @@ import json
 import os
 
 import re
+
+import aiomysql
+import aioredis
 import telebot  # pip3 install --upgrade pyTelegramBotAPI
 from telebot import types
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
@@ -16,11 +19,6 @@ import threading
 
 # 引入配置文件
 from Config.config_loader import public_config
-
-# 引用数据库异步操作模块
-from DataBase.async_mysql import mysql_manager
-from DataBase.async_redis import redis_manager
-import aiomysql
 
 # 引用日志模块
 from Logger.logger_config import setup_logger
@@ -175,34 +173,56 @@ async def send_telegram_message(message: str):
         return
 
     if bot:
-        conn = None
         try:
-            # 直接从管理器获取连接和客户端
-            conn = await mysql_manager.acquire()
-            redis = redis_manager.client
+            # 创建独立的Redis连接，避免使用主事件循环的连接池
+            redis_url = (f"redis://{public_config.get(key='redis.host', get_type=str)}:"
+                         f"{public_config.get(key='redis.port', get_type=int)}/"
+                         f"{public_config.get(key='redis.db', get_type=int)}")
 
-            cache_key = "send_telegram_message_to_admin"
-            cached_data = await redis.get(cache_key)
+            # 使用独立的Redis连接
+            async with aioredis.from_url(redis_url, decode_responses=True) as redis:
+                cache_key = "send_telegram_message_to_admin"
+                cached_data = await redis.get(cache_key)
 
-            admin_chat_id = None
+                admin_chat_ids = []
 
-            if cached_data:
-                admin_chat_id = json.loads(cached_data)
-            else:
-                async with conn.cursor(aiomysql.DictCursor) as cur:
-                    await cur.execute("SELECT `chat_id` FROM `telegram_users` order by `chat_id`")
-                    admin_chat_id = await cur.fetchall()
-                    await redis.set(cache_key, json.dumps(admin_chat_id), ex=3600)
+                if cached_data:
+                    admin_chat_ids = json.loads(cached_data)
+                else:
+                    # 创建独立的MySQL连接
+                    mysql_cfg = {
+                        "host": public_config.get(key="database.host", get_type=str),
+                        "port": public_config.get(key="database.port", get_type=int),
+                        "user": public_config.get(key="database.user", get_type=str),
+                        "password": public_config.get(key="database.password", get_type=str),
+                        "db": public_config.get(key="database.database", get_type=str),
+                        "charset": public_config.get(key="database.charset", get_type=str)
+                    }
 
-            for chat_id in admin_chat_id:
-                if chat_id['chat_id']:
-                    bot.send_message(chat_id=chat_id['chat_id'], text=message)
-            logger.info(f"发送Telegram消息成功, 消息内容: {message}")
-        except Exception as aa:
-            logger.error(f"发送Telegram消息失败: 错误信息: {aa}")
-        finally:
-            if conn:
-                await mysql_manager.release(conn)
+                    # 使用独立的MySQL连接
+                    async with aiomysql.connect(**mysql_cfg) as conn:
+                        async with conn.cursor(aiomysql.DictCursor) as cur:
+                            await cur.execute("SELECT `chat_id` FROM `telegram_users` ORDER BY `chat_id`")
+                            result = await cur.fetchall()
+                            admin_chat_ids = [row['chat_id'] for row in result] if result else []
+
+                            # 缓存到Redis
+                            await redis.set(cache_key, json.dumps(admin_chat_ids), ex=3600)
+
+                # 发送消息给所有管理员
+                success_count = 0
+                for chat_id in admin_chat_ids:
+                    try:
+                        bot.send_message(chat_id=chat_id, text=message)
+                        success_count += 1
+                    except Exception as e:
+                        logger.error(f"发送消息到 chat_id {chat_id} 失败: {e}")
+
+                logger.info(
+                    f"成功发送Telegram消息到 {success_count}/{len(admin_chat_ids)} 个管理员，消息内容: {message}")
+
+        except Exception as e:
+            logger.error(f"发送Telegram消息失败: {e}")
     else:
         logger.error("Telegram机器人未初始化，无法发送消息")
 
