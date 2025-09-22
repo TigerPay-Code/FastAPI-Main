@@ -7,7 +7,7 @@
 # @Function  :
 import threading
 
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler  # pip install apscheduler
 from Telegram.auto_bot import send_telegram_message
 
 # 引用数据库异步操作模块
