@@ -29,19 +29,36 @@ log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
 bot = None
+bot_initialized = False  # 添加初始化状态标志
 
 try:
-    bot = telebot.TeleBot(token=public_config.get("telegram", "token"), parse_mode=None)
-except Exception as e:
-    print(f"初始化 Telegram Bot 失败: {e}")
+    token = public_config.get("telegram", "token", get_type=str, default='')
+    if token and isinstance(token, str) and token.strip():
+        # 初始化 Telegram Bot
+        bot = telebot.TeleBot(token=token)
+        bot_initialized = True
+        logger.info("Telegram Bot 初始化成功")
+    else:
+        logger.error("获取 Telegram token 失败或 token 为空")
+except Exception as err:
+    bot_initialized = False
+    logger.info(f"初始化 Telegram Bot 失败: {err}")
 
 
 def get_chat_id_handler(message):
+    if not bot_initialized:
+        logger.error("Bot 未初始化，无法处理消息")
+        return
+
     chat_id = message.chat.id
     bot.send_message(chat_id, f"你的聊天ID是: {chat_id}")
 
 
 def handle_bot_click(message):
+    if not bot_initialized:
+        logger.error("Bot 未初始化，无法处理消息")
+        return
+
     chat_id = message.chat.id
     markup = InlineKeyboardMarkup()
 
@@ -68,18 +85,23 @@ def handle_bot_click(message):
 
 
 # 处理按钮点击事件
-@bot.callback_query_handler(func=lambda call: True)
-def handle_callback_query(call):
-    if call.data == "View":
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你点击了查看按钮")
-    elif call.data == "Cancel":
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你取消了操作")
-        bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-    else:
-        bot.answer_callback_query(callback_query_id=call.id, text="未知操作")
+if bot_initialized:
+    @bot.callback_query_handler(func=lambda call: True)
+    def handle_callback_query(call):
+        if call.data == "View":
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你点击了查看按钮")
+        elif call.data == "Cancel":
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你取消了操作")
+            bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+        else:
+            bot.answer_callback_query(callback_query_id=call.id, text="未知操作")
 
 
 def run_bot():
+    if not bot_initialized:
+        logger.error("Bot 未初始化，无法启动轮询")
+        return
+
     bot.infinity_polling(
         allowed_updates=[  # 明确指定需要处理的更新类型
             "message",  # 处理消息
@@ -100,6 +122,11 @@ def run_bot():
 
 
 def start_bot():
+    if not bot_initialized:
+        logger.error("Bot 未初始化，无法启动")
+        return
+
+    # 启动轮询线程
     threading.Thread(target=run_bot, daemon=True).start()
 
     # 删除旧命令
@@ -125,17 +152,23 @@ def start_bot():
 
 
 def stop_bot():
-    bot.stop_polling()
+    if bot_initialized:
+        bot.stop_polling()
 
 
 @bot.message_handler(commands=['id'])
+@bot.message_handler(commands=['id'])
 def gei_chat_id(message):
-    global bot
+    if not bot_initialized:
+        logger.error("Bot 未初始化，无法处理消息")
+        return
     bot.reply_to(message, f"{message.chat.id}")
 
 
 async def send_telegram_message(message: str):
-    global bot
+    if not bot_initialized:
+        logger.error("Telegram机器人未初始化，无法发送消息")
+        return
 
     if bot:
         conn = None
@@ -203,57 +236,58 @@ def format_title_display(title: str) -> str:
 
 
 # 处理成员变动
-@bot.chat_member_handler()
-def handle_member_changes(update: types.ChatMemberUpdated):
-    try:
-        old = update.old_chat_member
-        new = update.new_chat_member
-        chat = update.chat
+if bot_initialized:
+    @bot.chat_member_handler()
+    def handle_member_changes(update: types.ChatMemberUpdated):
+        try:
+            old = update.old_chat_member
+            new = update.new_chat_member
+            chat = update.chat
 
-        # 新成员加入
-        if old.status in ["left", "kicked", None] and new.status == "member":
-            # 排除机器人自己
-            if new.user.is_bot:
-                print(f"检测到机器人加入，跳过欢迎: {new.user.first_name}")
-                return
+            # 新成员加入
+            if old.status in ["left", "kicked", None] and new.status == "member":
+                # 排除机器人自己
+                if new.user.is_bot:
+                    print(f"检测到机器人加入，跳过欢迎: {new.user.first_name}")
+                    return
 
-            print(f"检测到新成员加入: {new.user.first_name} 在群组 {chat.id}")
+                print(f"检测到新成员加入: {new.user.first_name} 在群组 {chat.id}")
 
-            welcome_msg = f"欢迎 {new.user.first_name} 加入群组！🎉"
-            bot.send_message(chat.id, welcome_msg)
+                welcome_msg = f"欢迎 {new.user.first_name} 加入群组！🎉"
+                bot.send_message(chat.id, welcome_msg)
 
 
-        # 成员离开
-        elif old.status == "member" and new.status in ["left", "kicked"]:
-            # 排除机器人自己
-            if new.user.is_bot:
-                print(f"检测到机器人离开，跳过告别: {new.user.first_name}")
-                return
+            # 成员离开
+            elif old.status == "member" and new.status in ["left", "kicked"]:
+                # 排除机器人自己
+                if new.user.is_bot:
+                    print(f"检测到机器人离开，跳过告别: {new.user.first_name}")
+                    return
 
-            print(f"检测到成员离开: {new.user.first_name} 从群组 {chat.id}")
+                print(f"检测到成员离开: {new.user.first_name} 从群组 {chat.id}")
 
-            farewell_msg = f"{new.user.first_name} 已离开群组。👋"
-            bot.send_message(chat.id, farewell_msg)
+                farewell_msg = f"{new.user.first_name} 已离开群组。👋"
+                bot.send_message(chat.id, farewell_msg)
 
-        # 获取头衔
-        old_title = get_custom_title_safe(old)
-        new_title = get_custom_title_safe(new)
+            # 获取头衔
+            old_title = get_custom_title_safe(old)
+            new_title = get_custom_title_safe(new)
 
-        # 状态变化：成为管理员
-        if old.status != "administrator" and new.status == "administrator":
-            display = format_title_display(new_title)
-            msg = f"🎖️ {new.user.first_name} 成为{display}"
-            bot.send_message(update.chat.id, msg)
-
-        # 管理员权限变更
-        elif old.status == "administrator" and new.status == "administrator":
-            if old_title != new_title:
-                old_display = format_title_display(old_title)
-                new_display = format_title_display(new_title)
-
-                operator = update.from_user.first_name
-                msg = f"📛 {operator} 更新了头衔: {old_display} → {new_display}"
+            # 状态变化：成为管理员
+            if old.status != "administrator" and new.status == "administrator":
+                display = format_title_display(new_title)
+                msg = f"🎖️ {new.user.first_name} 成为{display}"
                 bot.send_message(update.chat.id, msg)
 
-    except Exception as err:
-        print(f"处理管理员变更出错: {err}")
+            # 管理员权限变更
+            elif old.status == "administrator" and new.status == "administrator":
+                if old_title != new_title:
+                    old_display = format_title_display(old_title)
+                    new_display = format_title_display(new_title)
+
+                    operator = update.from_user.first_name
+                    msg = f"📛 {operator} 更新了头衔: {old_display} → {new_display}"
+                    bot.send_message(update.chat.id, msg)
+
+        except Exception as err:
+            print(f"处理管理员变更出错: {err}")
