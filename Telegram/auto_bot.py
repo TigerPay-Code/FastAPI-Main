@@ -33,6 +33,7 @@ bot_initialized = False  # 添加初始化状态标志
 
 try:
     token = public_config.get("telegram", "token", get_type=str, default='')
+    logger.info(f"加载 Telegram token 成功，token: {token[:4]}****")
     if token and isinstance(token, str) and token.strip():
         # 初始化 Telegram Bot
         bot = telebot.TeleBot(token=token)

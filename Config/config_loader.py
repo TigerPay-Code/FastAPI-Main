@@ -51,7 +51,7 @@ class ConfigLoader:
         通过点分隔的键路径获取配置值。
 
         :param key: 配置键，例如 'database.host'。
-        :param get_type: 期望返回的数据类型，例如 int, float, bool。
+        :param get_type: 期望返回的数据类型，例如 str,int, float, bool。
         :param default: 如果键不存在，返回的默认值。
         :return: 配置值。
         """
