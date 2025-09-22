@@ -319,6 +319,9 @@ async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
 
 @notify.post("/global_pay_out_notify")
 async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
+
+
+
     logger.info(f"收到 【代付】 通知：数据：{notify_out_data}")
     if notify_out_data.state == 2:
         logger.info(f"代付订单号: {notify_out_data.sysOrderNo} 已成功代付，金额: {notify_out_data.amount}")

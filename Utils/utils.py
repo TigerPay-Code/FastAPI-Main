@@ -42,4 +42,14 @@ def decode_access_token(token: str):
         return None
 
 
-print(create_access_token)
+exa = timedelta(minutes=60)
+print(exa,type(exa))
+
+cc = create_access_token(data={"sub": "user123"}, expires_delta=exa)
+
+print(cc)
+
+
+
+
+print(decode_access_token(cc))
