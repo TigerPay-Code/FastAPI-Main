@@ -22,11 +22,11 @@ logger = setup_logger(log_name)
 scheduler = None
 
 
-def start_check_balance():
+async def start_check_balance():
     """定时任务执行函数"""
     message = f"一分钟任务开始执行 - 时间: {time.strftime('%Y-%m-%d %H:%M:%S')}"
     logger.info(message)
-    send_telegram_message(message)
+    await send_telegram_message(message)
 
 
 def init_scheduler():
