@@ -8,8 +8,7 @@
 import os
 import time
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.schedulers.background import BackgroundScheduler, BlockingScheduler
 import threading
 
 from Logger.logger_config import setup_logger
@@ -18,51 +17,39 @@ from Telegram.auto_bot import send_telegram_message
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
-# 全局调度器实例
-scheduler = None
+push_msg_thread = None
 
 
-async def start_check_balance():
-    """定时任务执行函数"""
-    message = f"一分钟任务开始执行 - 时间: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+def check_pending_payments():
+    message = '每分钟检查一次未处理支付通知的任务执行了。'
     logger.info(message)
-    await send_telegram_message(message)
+    send_telegram_message(message)
 
 
-def init_scheduler():
-    """初始化调度器"""
-    global scheduler
-    try:
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(
-            func=start_check_balance,
-            trigger=IntervalTrigger(minutes=1),
-            id='minute_check_balance',
-            replace_existing=True,
-            start_date='2025-01-01 00:00:00',
-            end_date='2025-12-31 23:59:59'
-        )
-        scheduler.start()
-        logger.info("一分钟定时任务已启动")
-
-        # 立即执行一次
-        start_check_balance()
-
-        push_msg_thread = threading.Thread(target=init_scheduler).start()
-
-    except Exception as e:
-        logger.error(f"启动定时任务失败: {e}")
+def start_check_balance_task():
+    check_balance = BlockingScheduler()
+    check_balance.add_job(
+        func=check_pending_payments,
+        trigger='interval',
+        minutes=1,
+        start_date='2025-01-01 00:00:00',
+        end_date='2025-12-31 23:59:59'
+    )  # 每1分钟执行一次
+    check_balance.start()
 
 
-def shutdown_scheduler():
-    """关闭调度器"""
-    global scheduler
-    if scheduler and scheduler.running:
-        scheduler.shutdown()
-        logger.info("定时任务已停止")
-    scheduler = None
+def start_periodic_task():
+    global push_msg_thread
+    """
+    启动周期性任务调度器。
+    """
+    push_msg_thread = threading.Thread(target=start_check_balance_task).start()
 
 
-def get_scheduler():
-    """获取调度器实例"""
-    return scheduler
+def stop_periodic_task():
+    """
+    停止周期性任务调度器。
+    """
+    global push_msg_thread
+    if push_msg_thread:
+        push_msg_thread.stop()
