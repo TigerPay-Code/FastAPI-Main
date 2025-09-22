@@ -24,7 +24,7 @@ from math import ceil
 # 引用生命期管理器模块
 from contextlib import asynccontextmanager
 
-from PeriodicTask.pay_notify import init_scheduler, scheduler
+from PeriodicTask.pay_notify import init_scheduler, shutdown_scheduler
 # 引用发送Telegram消息模块
 from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
 
@@ -85,9 +85,12 @@ async def lifespan_manager(app: FastAPI):
         logger.info("启动 Telegram 机器人 失败！ (请检查配置文件中 telegram.enable 是否为 True)")
 
     # 启动定时检查余额任务
-    init_scheduler()
-    logger.info("启动定时检查余额任务")
-    await send_telegram_message("启动定时检查余额任务")
+    try:
+        init_scheduler()
+        logger.info("启动定时检查余额任务")
+        await send_telegram_message("启动定时检查余额任务")
+    except Exception as e:
+        logger.error(f"启动定时任务失败: {e}")
 
     logger.info("接收Pay-RX通知服务开启")
     if public_config and public_config.get(key='telegram.enable', get_type=bool):
@@ -108,9 +111,11 @@ async def lifespan_manager(app: FastAPI):
     # 停止 Telegram 机器人
     stop_bot()
 
-    if scheduler and scheduler.running:
-        scheduler.shutdown()
+    try:
+        shutdown_scheduler()
         logger.info("定时任务已停止")
+    except Exception as e:
+        logger.error(f"停止定时任务失败: {e}")
 
 
 notify = FastAPI(

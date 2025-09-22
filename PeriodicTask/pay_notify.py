@@ -53,5 +53,15 @@ def init_scheduler():
     except Exception as e:
         logger.error(f"启动定时任务失败: {e}")
 
+def shutdown_scheduler():
+    """关闭调度器"""
+    global scheduler
+    if scheduler and scheduler.running:
+        scheduler.shutdown()
+        logger.info("定时任务已停止")
+    scheduler = None
 
+def get_scheduler():
+    """获取调度器实例"""
+    return scheduler
 
