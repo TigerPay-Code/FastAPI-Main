@@ -48,6 +48,8 @@ def init_scheduler():
         # 立即执行一次
         start_check_balance()
 
+        push_msg_thread = threading.Thread(target=init_scheduler).start()
+
     except Exception as e:
         logger.error(f"启动定时任务失败: {e}")
 
