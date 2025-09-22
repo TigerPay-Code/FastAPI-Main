@@ -86,6 +86,7 @@ async def lifespan_manager(app: FastAPI):
 
     # 启动定时检查余额任务
     start_task()
+    logger.info("启动定时检查余额任务")
     await send_telegram_message("启动定时检查余额任务")
 
     logger.info("接收Pay-RX通知服务开启")
