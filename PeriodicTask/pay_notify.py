@@ -5,6 +5,7 @@
 # @Time      : 2025/9/22 13:45
 # @IDE       : PyCharm
 # @Function  :
+import threading
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from Telegram.auto_bot import send_telegram_message
@@ -57,3 +58,9 @@ def start_check_balance_task():
         end_date='2025-12-31 23:59:59'
     )  # 每10分钟执行一次
     check_balance.start()
+
+
+
+def start_task():
+    threading.Thread(target=start_check_balance_task, daemon=True).start()
+
