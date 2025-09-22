@@ -8,6 +8,7 @@
 - Logger：日志模块
 - Middleware：中间件模块
 - Nginx：Nginx 配置文件
+- PeriodicTask：定时任务模块
 - ProjectUpdate：项目更新脚本
 - ReceiveNotify：接收支付通知模块
 - Redis：Redis 模块

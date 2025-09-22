@@ -310,18 +310,32 @@ async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
     logger.info(f"收到 【代收】 通知：数据：{notify_in_data}")
     if notify_in_data.state == 2:
         logger.info(f"订单号: {notify_in_data.sysOrderNo} 已成功支付，金额: {notify_in_data.amount}")
+        await send_telegram_message(f"订单号: {notify_in_data.sysOrderNo} 已成功支付，金额: {notify_in_data.amount}")
     else:
         logger.error(f"订单号: {notify_in_data.sysOrderNo} 支付失败，金额: {notify_in_data.amount}")
+        await send_telegram_message(f"订单号: {notify_in_data.sysOrderNo} 支付失败，金额: {notify_in_data.amount}")
     return success
 
 
 @notify.post("/global_pay_out_notify")
 async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
     logger.info(f"收到 【代付】 通知：数据：{notify_out_data}")
+    if notify_out_data.state == 2:
+        logger.info(f"代付订单号: {notify_out_data.sysOrderNo} 已成功代付，金额: {notify_out_data.amount}")
+        await send_telegram_message(f"订单号: {notify_out_data.sysOrderNo} 已成功代付，金额: {notify_out_data.amount}")
+    else:
+        logger.error(f"代付订单号: {notify_out_data.sysOrderNo} 代付失败，金额: {notify_out_data.amount}")
+        await send_telegram_message(f"订单号: {notify_out_data.sysOrderNo} 代付失败，金额: {notify_out_data.amount}")
     return success
 
 
 @notify.post("/global_refund_notify")
 async def handle_global_refund_notify(notify_refund_data: Pay_RX_Notify_Refund_Data):
     logger.info(f"收到 【退款】 通知：数据：{notify_refund_data}")
+    if notify_refund_data.state == 2:
+        logger.info(f"退款订单号: {notify_refund_data.sysOrderNo} 已成功退款，金额: {notify_refund_data.amount}")
+        await send_telegram_message(f"退款订单号: {notify_refund_data.sysOrderNo} 已成功退款，金额: {notify_refund_data.amount}")
+    else:
+        logger.error(f"退款订单号: {notify_refund_data.sysOrderNo} 退款失败，金额: {notify_refund_data.amount}")
+        await send_telegram_message(f"退款订单号: {notify_refund_data.sysOrderNo} 退款失败，金额: {notify_refund_data.amount}")
     return success
