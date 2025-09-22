@@ -42,7 +42,7 @@ def start_check_balance_task():
     scheduler.add_job(
         func=run_async_task,  # 直接传递函数引用，而不是调用结果
         trigger='interval',
-        minutes=1,
+        minutes=30,
         start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59'
     )

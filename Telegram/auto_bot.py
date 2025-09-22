@@ -190,30 +190,18 @@ async def send_telegram_message(message: str):
                     await cur.execute("SELECT `chat_id` FROM `telegram_users` ORDER BY `chat_id`")
                     result = await cur.fetchall()
 
-                    # 调试：打印查询结果
-                    logger.info(f"数据库查询结果: {result}")
-
                     # 提取chat_id值
                     admin_chat_ids = []
                     for row in result:
                         chat_id_value = row['chat_id']
-                        logger.info(f"处理行: {row}, chat_id值: {chat_id_value}, 类型: {type(chat_id_value)}")
                         admin_chat_ids.append(str(chat_id_value))
 
-                    logger.info(f"最终admin_chat_ids: {admin_chat_ids}")
-
-            # 发送消息给所有管理员
-            success_count = 0
             for chat_id in admin_chat_ids:
                 try:
-                    logger.info(f"尝试发送消息到 chat_id: {chat_id}, 类型: {type(chat_id)}")
                     bot.send_message(chat_id=str(chat_id), text=message)
-                    success_count += 1
-                    logger.info(f"消息成功发送到 chat_id: {chat_id}")
+                    logger.info(f"发送消息[{message}]到 chat_id [{chat_id}] 成功")
                 except Exception as e:
                     logger.error(f"发送消息到 chat_id {chat_id} 失败: {e}")
-
-            logger.info(f"成功发送Telegram消息到 {success_count}/{len(admin_chat_ids)} 个管理员")
 
         except Exception as e:
             logger.error(f"发送Telegram消息失败: {e}")
