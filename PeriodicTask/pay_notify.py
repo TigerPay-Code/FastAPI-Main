@@ -5,8 +5,8 @@
 # @Time      : 2025/9/22 13:45
 # @IDE       : PyCharm
 # @Function  :
+import asyncio
 import os
-import time
 
 from apscheduler.schedulers.background import BackgroundScheduler, BlockingScheduler
 import threading
@@ -20,16 +20,16 @@ logger = setup_logger(log_name)
 push_msg_thread = None
 
 
-def check_pending_payments():
+async def check_pending_payments():
     message = '每分钟检查一次未处理支付通知的任务执行了。'
     logger.info(message)
-    send_telegram_message(message)
+    await send_telegram_message(message)
 
 
 def start_check_balance_task():
     check_balance = BlockingScheduler()
     check_balance.add_job(
-        func=check_pending_payments,
+        func=asyncio.run(check_pending_payments()),
         trigger='interval',
         minutes=1,
         start_date='2025-01-01 00:00:00',
