@@ -21,14 +21,12 @@ logger = setup_logger(log_name)
 # 全局调度器实例
 scheduler = None
 
+
 def start_check_balance():
     """定时任务执行函数"""
     message = f"一分钟任务开始执行 - 时间: {time.strftime('%Y-%m-%d %H:%M:%S')}"
     logger.info(message)
-    try:
-        send_telegram_message(message)
-    except Exception as e:
-        logger.error(f"发送Telegram消息失败: {e}")
+    send_telegram_message(message)
 
 
 def init_scheduler():
@@ -53,6 +51,7 @@ def init_scheduler():
     except Exception as e:
         logger.error(f"启动定时任务失败: {e}")
 
+
 def shutdown_scheduler():
     """关闭调度器"""
     global scheduler
@@ -61,7 +60,7 @@ def shutdown_scheduler():
         logger.info("定时任务已停止")
     scheduler = None
 
+
 def get_scheduler():
     """获取调度器实例"""
     return scheduler
-
