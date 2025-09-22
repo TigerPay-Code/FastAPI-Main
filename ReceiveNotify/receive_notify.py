@@ -43,7 +43,6 @@ logger = setup_logger(log_name)
 
 success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
-one = Response(content=1, media_type="text/plain")
 
 mysql_cfg = {
     "host": public_config.get(key="database.host", get_type=str),
