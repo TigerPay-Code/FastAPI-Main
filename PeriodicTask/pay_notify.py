@@ -5,42 +5,36 @@
 # @Time      : 2025/9/22 13:45
 # @IDE       : PyCharm
 # @Function  :
+import os
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 import threading
 
-from apscheduler.schedulers.blocking import BlockingScheduler  # pip install apscheduler
-from Telegram.auto_bot import send_telegram_message
-
-# 引用数据库异步操作模块
-from DataBase.async_mysql import mysql_manager, get_mysql_conn
-from DataBase.async_redis import redis_manager, get_redis
-import aiomysql
-
-# 引用日志模块
-import os
 from Logger.logger_config import setup_logger
+from Telegram.auto_bot import send_telegram_message
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
-
 def start_check_balance():
     message = f"一分钟任务开始执行"
+    logger.info(message)  # 添加日志记录
     send_telegram_message(message)
 
-
 def start_check_balance_task():
-    check_balance = BlockingScheduler()
-    check_balance.add_job(
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
         func=start_check_balance,
-        trigger='interval',
-        minutes=1,
-        start_date='2025-01-01 00:00:00',
-        end_date='2025-12-31 23:59:59'
-    )  # 每10分钟执行一次
-    check_balance.start()
-
-
+        trigger=IntervalTrigger(minutes=1),
+        id='minute_check_balance',
+        replace_existing=True
+    )
+    scheduler.start()
+    logger.info("一分钟定时任务已启动")
 
 def start_task():
-    threading.Thread(target=start_check_balance_task, daemon=True).start()
-
+    # 使用守护线程启动定时任务
+    thread = threading.Thread(target=start_check_balance_task, daemon=True)
+    thread.start()
+    logger.info("定时任务线程已启动")
