@@ -30,21 +30,21 @@ def start_check_balance():
     # 查询数据库中所有用户的余额
     async def get_user_balance():
         async with mysql_conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT user_id, balance FROM user_info")
+            await cur.execute("SELECT id, username, balance FROM user_info")
             user_balance_list = await cur.fetchall()
         return user_balance_list
 
     # 遍历用户余额，如果余额小于1000，则发送通知
     async def send_notify(user_balance_list):
         for user_balance in user_balance_list:
-            if user_balance['balance'] < 1000:
-                user_id = user_balance['user_id']
+            if user_balance['balance'] < 0.70:
+                user_id = user_balance['id']
                 balance = user_balance['balance']
                 # 发送通知
-                message = f"用户{user_id}的余额为{balance}元，请及时充值！"
+                message = f"用户{id}的余额为{balance}元，请及时充值！"
                 await send_telegram_message(message)
                 # 记录日志
-                logger.info(f"用户{user_id}余额为{balance}元，已发送通知")
+                logger.info(f"用户{id}余额为{balance}元，已发送通知")
 
 
 def start_check_balance_task():
