@@ -85,13 +85,13 @@ if bot_initialized:
 
         bot.send_message(chat_id, "请选择一个需要查看的商户：", reply_markup=markup)
 
-
 # 处理按钮点击事件
 if bot_initialized:
     @bot.callback_query_handler(func=lambda call: True)
     def handle_callback_query(call):
         if call.data == "View":
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你点击了查看按钮")
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                  text="你点击了查看按钮")
         elif call.data == "Cancel":
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你取消了操作")
             bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
@@ -158,13 +158,13 @@ def stop_bot():
         bot.stop_polling()
 
 
-@bot.message_handler(commands=['id'])
-@bot.message_handler(commands=['id'])
-def gei_chat_id(message):
-    if not bot_initialized:
-        logger.error("Bot 未初始化，无法处理消息")
-        return
-    bot.reply_to(message, f"{message.chat.id}")
+if bot_initialized:
+    @bot.message_handler(commands=['id'])
+    def gei_chat_id(message):
+        if not bot_initialized:
+            logger.error("Bot 未初始化，无法处理消息")
+            return
+        bot.reply_to(message, f"{message.chat.id}")
 
 
 async def send_telegram_message(message: str):
