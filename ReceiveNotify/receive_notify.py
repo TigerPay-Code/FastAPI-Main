@@ -24,7 +24,9 @@ from math import ceil
 # 引用生命期管理器模块
 from contextlib import asynccontextmanager
 
-from PeriodicTask.pay_notify import init_scheduler, shutdown_scheduler
+# 引用定时任务模块
+# from PeriodicTask.pay_notify import init_scheduler, shutdown_scheduler
+
 # 引用发送Telegram消息模块
 from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
 
