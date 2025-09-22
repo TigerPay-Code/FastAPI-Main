@@ -54,34 +54,36 @@ def get_chat_id_handler(message):
     bot.send_message(chat_id, f"你的聊天ID是: {chat_id}")
 
 
-def handle_bot_click(message):
-    if not bot_initialized:
-        logger.error("Bot 未初始化，无法处理消息")
-        return
+if bot_initialized:
+    @bot.message_handler(commands=['test'])
+    def handle_bot_click(message):
+        if not bot_initialized:
+            logger.error("Bot 未初始化，无法处理消息")
+            return
 
-    chat_id = message.chat.id
-    markup = InlineKeyboardMarkup()
+        chat_id = message.chat.id
+        markup = InlineKeyboardMarkup()
 
-    # 第一行：三个按钮
-    markup.row(
-        InlineKeyboardButton(text='选项1', callback_data='Option1'),
-        InlineKeyboardButton(text='选项2', callback_data='Option2'),
-        InlineKeyboardButton(text='选项3', callback_data='Option3')
-    )
+        # 第一行：三个按钮
+        markup.row(
+            InlineKeyboardButton(text='选项1', callback_data='Option1'),
+            InlineKeyboardButton(text='选项2', callback_data='Option2'),
+            InlineKeyboardButton(text='选项3', callback_data='Option3')
+        )
 
-    # 第二行：两个按钮
-    markup.row(
-        InlineKeyboardButton(text='选项4', callback_data='Option4'),
-        InlineKeyboardButton(text='选项5', callback_data='Option5')
-    )
+        # 第二行：两个按钮
+        markup.row(
+            InlineKeyboardButton(text='选项4', callback_data='Option4'),
+            InlineKeyboardButton(text='选项5', callback_data='Option5')
+        )
 
-    # 第三行：一个按钮（查看）
-    markup.row(InlineKeyboardButton(text='查看', callback_data='View'))
+        # 第三行：一个按钮（查看）
+        markup.row(InlineKeyboardButton(text='查看', callback_data='View'))
 
-    # 第四行：一个按钮（取消）
-    markup.row(InlineKeyboardButton(text='取消', callback_data='Cancel'))
+        # 第四行：一个按钮（取消）
+        markup.row(InlineKeyboardButton(text='取消', callback_data='Cancel'))
 
-    bot.send_message(chat_id, "请选择一个需要查看的商户：", reply_markup=markup)
+        bot.send_message(chat_id, "请选择一个需要查看的商户：", reply_markup=markup)
 
 
 # 处理按钮点击事件
@@ -133,8 +135,8 @@ def start_bot():
     bot.delete_my_commands(scope=None, language_code=None)
 
     # 注册命令处理器
-    bot.register_message_handler(get_chat_id_handler, commands=["id"])
-    bot.register_message_handler(handle_bot_click, commands=["test"])
+    # bot.register_message_handler(get_chat_id_handler, commands=["id"])
+    # bot.register_message_handler(handle_bot_click, commands=["test"])
 
     commands_list = [
         ("id", "查询聊天ID"),
