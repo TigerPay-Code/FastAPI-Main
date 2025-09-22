@@ -6,6 +6,7 @@
 # @IDE       : PyCharm
 # @Function  :
 import os
+import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -17,25 +18,40 @@ from Telegram.auto_bot import send_telegram_message
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
+# 全局调度器实例
+scheduler = None
+
 def start_check_balance():
-    message = f"一分钟任务开始执行"
-    logger.info(message)  # 添加日志记录
-    send_telegram_message(message)
+    """定时任务执行函数"""
+    message = f"一分钟任务开始执行 - 时间: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+    logger.info(message)
+    try:
+        send_telegram_message(message)
+    except Exception as e:
+        logger.error(f"发送Telegram消息失败: {e}")
 
-def start_check_balance_task():
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        func=start_check_balance,
-        trigger=IntervalTrigger(minutes=1),
-        id='minute_check_balance',
-        replace_existing=True,
-        start_date='2025-01-01 00:00:00',
-        end_date='2025-12-31 23:59:59'
-    )
-    scheduler.start()
-    logger.info("一分钟定时任务已启动")
 
-def start_task():
-    # 使用守护线程启动定时任务
-    threading.Thread(target=start_check_balance_task, daemon=True).start()
-    logger.info("定时任务线程已启动")
+def init_scheduler():
+    """初始化调度器"""
+    global scheduler
+    try:
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(
+            func=start_check_balance,
+            trigger=IntervalTrigger(minutes=1),
+            id='minute_check_balance',
+            replace_existing=True,
+            start_date='2025-01-01 00:00:00',
+            end_date='2025-12-31 23:59:59'
+        )
+        scheduler.start()
+        logger.info("一分钟定时任务已启动")
+
+        # 立即执行一次
+        start_check_balance()
+
+    except Exception as e:
+        logger.error(f"启动定时任务失败: {e}")
+
+
+
