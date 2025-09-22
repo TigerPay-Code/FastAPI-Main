@@ -128,7 +128,6 @@ def stop_bot():
     bot.stop_polling()
 
 
-
 @bot.message_handler(commands=['id'])
 def gei_chat_id(message):
     global bot
