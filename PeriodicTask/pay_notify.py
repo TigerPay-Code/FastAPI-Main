@@ -53,7 +53,7 @@ def start_check_balance_task():
     check_balance.add_job(
         func=start_check_balance,
         trigger='interval',
-        minutes=10,
+        minutes=1,
         start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59'
     )  # 每10分钟执行一次
