@@ -31,7 +31,7 @@ logger = setup_logger(log_name)
 bot = None
 
 try:
-    bot = telebot.TeleBot(token='8263751942:AAH5rvEopgKEERvUa9peWZ-TnctU230rHUU')
+    bot = telebot.TeleBot(token=public_config.get("telegram", "token"), parse_mode=None)
 except Exception as e:
     print(f"初始化 Telegram Bot 失败: {e}")
 
