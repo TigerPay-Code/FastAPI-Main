@@ -187,7 +187,7 @@ async def send_telegram_message(message: str):
             # 使用独立的MySQL连接
             async with aiomysql.connect(**mysql_cfg) as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cur:
-                    await cur.execute("SELECT `chat_id` FROM `telegram_users` WHERE `is_admin` = 1 ORDER BY `chat_id`")
+                    await cur.execute("SELECT `chat_id` FROM `telegram_users` WHERE `status` = 1 AND `is_admin` = 1 ORDER BY `chat_id`")
                     result = await cur.fetchall()
 
                     # 提取chat_id值

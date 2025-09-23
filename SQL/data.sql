@@ -7,11 +7,11 @@ USE `fastapi`;
 /* 创建telegram管理用户表 */
 DROP TABLE IF EXISTS `telegram_users`;
 CREATE TABLE IF NOT EXISTS `telegram_users` (
-    `id` bigint(20) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
-    `username` varchar(50) NOT NULL COMMENT '用户名',
-    `is_admin` tinyint(1) NOT NULL COMMENT '是否为管理员，0-失效，1-是',
-    `status` tinyint(1) NOT NULL COMMENT '状态 0-失效，1-正常',
-    `chat_id` bigint(20) NOT NULL COMMENT '聊天ID',
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    `username` VARCHAR(50) NOT NULL COMMENT '用户名',
+    `is_admin` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '管理员标识：0-普通用户, 1-管理员',
+    `status` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '状态：0-失效, 1-正常',
+    `chat_id` BIGINT NOT NULL COMMENT 'Telegram聊天ID',
     UNIQUE KEY `uniq_username` (`username`),
     UNIQUE KEY `uniq_chat_id` (`chat_id`)
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = 'telegram管理用户表' ROW_FORMAT = DYNAMIC;
