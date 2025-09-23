@@ -7,6 +7,7 @@ Config/测试/
 ReceiveNotify/抗压测试/
 .idea/
 venv/
+SQL/
 .vscode/
 #Cache folder
 .alcache/

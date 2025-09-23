@@ -11,7 +11,6 @@ import os
 import re
 
 import aiomysql
-import aioredis
 import telebot  # pip3 install --upgrade pyTelegramBotAPI
 from telebot import types
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
@@ -161,6 +160,7 @@ def stop_bot():
 if bot_initialized:
     @bot.message_handler(commands=['id'])
     def gei_chat_id(message):
+        logger.info(message)
         if not bot_initialized:
             logger.error("Bot 未初始化，无法处理消息")
             return

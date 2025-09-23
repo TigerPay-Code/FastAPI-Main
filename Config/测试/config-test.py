@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os
 import sys
 from Config.config_loader import ConfigLoader
@@ -47,9 +49,19 @@ try:
         print("数据库已经初始化。")
         async_database_url = ini_config.get(key='database.database_url', get_type=str)
         print(f"数据库连接 URL: {async_database_url}")
-        ini_config.set(key='database.init', value=False)
+
+        data = {
+            "name": "张三",
+            "age": 25,
+            "gender": "男"
+        }
+
+        ini_config.set(key='database.helong', value=data)
         ini_config.save()
 
+
+    helong = ini_config.get(key='database.helong', get_type=dict)
+    print(f"Helong 数据: {helong}")
 
 
 

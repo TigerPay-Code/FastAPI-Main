@@ -40,7 +40,7 @@ class ConfigLoader:
         加载 INI 格式的配置文件。
         """
         config = configparser.ConfigParser()
-        config.read(self.config_path)
+        config.read(self.config_path, encoding='utf-8')
         data = {}
         for section in config.sections():
             data[section] = dict(config.items(section))
