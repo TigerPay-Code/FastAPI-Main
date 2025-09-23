@@ -141,6 +141,74 @@ async def home(request: Request):
     return templates.TemplateResponse("base.html", {"request": request})
 
 
+@notify.get("/users", response_class=HTMLResponse)
+async def get_users(
+        request: Request,
+        page: int = Query(1, ge=1),
+        per_page: int = Query(10, ge=5, le=100),
+        conn=Depends(get_mysql_conn),
+        redis=Depends(get_redis)
+):
+    # 计算偏移量
+    offset = (page - 1) * per_page
+
+    # 从缓存中获取数据
+    cache_key = "all_users_list_cache"
+    cached_data = await redis.get(cache_key)
+
+    users = None
+
+    if cached_data:
+        # 如果缓存命中，则直接返回
+        users = json.loads(cached_data)
+
+        # 即使缓存命中，也需要获取总记录数用于分页
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT COUNT(*) AS total FROM users")
+            total_result = await cur.fetchone()
+            total_users = total_result['total']
+    else:
+        # 如果缓存未命中，则从数据库中获取数据
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            # 获取总记录数
+            await cur.execute("SELECT COUNT(*) AS total FROM users")
+            total_result = await cur.fetchone()
+            total_users = total_result['total']
+
+            # 获取当前页的用户数据
+            await cur.execute(
+                "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
+                (per_page, offset)
+            )
+            users = await cur.fetchall()
+
+            await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
+
+    # 计算总页数
+    total_pages = ceil(total_users / per_page)
+
+    # 分页信息
+    pagination = {
+        "page": page,
+        "per_page": per_page,
+        "total_users": total_users,
+        "total_pages": total_pages,
+        "has_prev": page > 1,
+        "has_next": page < total_pages,
+        "prev_page": page - 1 if page > 1 else 1,
+        "next_page": page + 1 if page < total_pages else total_pages
+    }
+
+    return request.app.templates.TemplateResponse(
+        "users.html",
+        {
+            "request": request,
+            "users": users,
+            "pagination": pagination
+        }
+    )
+
+
 @notify.get("/mysql")
 async def test_mysql(conn=Depends(get_mysql_conn)):
     async with conn.cursor() as cur:
@@ -240,74 +308,6 @@ async def transfer_money(conn=Depends(get_mysql_conn)):
     except Exception as e:
         await conn.rollback()  # 回滚事务
         return {"error": str(e)}
-
-
-@notify.get("/users", response_class=HTMLResponse)
-async def get_users(
-        request: Request,
-        page: int = Query(1, ge=1),
-        per_page: int = Query(10, ge=5, le=100),
-        conn=Depends(get_mysql_conn),
-        redis=Depends(get_redis)
-):
-    # 计算偏移量
-    offset = (page - 1) * per_page
-
-    # 从缓存中获取数据
-    cache_key = "all_users_list_cache"
-    cached_data = await redis.get(cache_key)
-
-    users = None
-
-    if cached_data:
-        # 如果缓存命中，则直接返回
-        users = json.loads(cached_data)
-
-        # 即使缓存命中，也需要获取总记录数用于分页
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT COUNT(*) AS total FROM users")
-            total_result = await cur.fetchone()
-            total_users = total_result['total']
-    else:
-        # 如果缓存未命中，则从数据库中获取数据
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            # 获取总记录数
-            await cur.execute("SELECT COUNT(*) AS total FROM users")
-            total_result = await cur.fetchone()
-            total_users = total_result['total']
-
-            # 获取当前页的用户数据
-            await cur.execute(
-                "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
-                (per_page, offset)
-            )
-            users = await cur.fetchall()
-
-            await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
-
-    # 计算总页数
-    total_pages = ceil(total_users / per_page)
-
-    # 分页信息
-    pagination = {
-        "page": page,
-        "per_page": per_page,
-        "total_users": total_users,
-        "total_pages": total_pages,
-        "has_prev": page > 1,
-        "has_next": page < total_pages,
-        "prev_page": page - 1 if page > 1 else 1,
-        "next_page": page + 1 if page < total_pages else total_pages
-    }
-
-    return request.app.templates.TemplateResponse(
-        "users.html",
-        {
-            "request": request,
-            "users": users,
-            "pagination": pagination
-        }
-    )
 
 
 @notify.get("/Pay-RX_Notify")  # 测试接口
