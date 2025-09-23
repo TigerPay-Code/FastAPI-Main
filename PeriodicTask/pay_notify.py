@@ -58,6 +58,20 @@ def start_check_balance_task():
         end_date='2025-12-31 23:59:59'  # 任务结束时间 2025-12-31 23:59:59
     )
 
+    scheduler.add_job(
+        func=run_async_task,
+        trigger='cron',
+        hour='12',
+        minute='49'
+    )
+
+    scheduler.add_job(
+        func=run_async_task,
+        trigger='cron',
+        hour='12',
+        minute='50'
+    )
+
     scheduler.start()
     logger.info("定时任务调度器已启动")
 
