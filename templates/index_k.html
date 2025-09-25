@@ -1,103 +1,143 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<title>QR with center icon — Canvas merge</title>
-<style>
-  body { font-family: sans-serif; padding: 20px; }
-  #out { width: 300px; height: 300px; }
-</style>
+  <meta charset="UTF-8">
+  <title>老虎支付 - 安全、快捷的跨境支付解决方案</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: #f7f9fc;
+      color: #333;
+    }
+    header {
+      background: #004d99;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    nav {
+      margin-top: 10px;
+    }
+    nav a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .hero {
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      color: white;
+      text-align: center;
+      padding: 100px 20px;
+    }
+    .hero h1 {
+      font-size: 3em;
+      margin-bottom: 15px;
+    }
+    .hero p {
+      font-size: 1.2em;
+    }
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 50px 20px;
+      background: white;
+    }
+    .feature {
+      flex: 1 1 250px;
+      max-width: 300px;
+      margin: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .feature h3 {
+      color: #004d99;
+    }
+    footer {
+      background: #004d99;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+    }
+    .admin-login {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+    }
+    .admin-login a {
+      background: #ffcc00;
+      color: #333;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.9em;
+      font-weight: bold;
+    }
+    .admin-login a:hover {
+      background: #ffdb4d;
+    }
+    .qrcode {
+      margin-top: 15px;
+      text-align: center;
+    }
+    .qrcode img {
+      border: 6px solid white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    header h1 {
+      font-size: 3.5em; /* 默认大约是1.5em，可以改成 2.5 或 3 更醒目 */
+      margin: 0;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>老虎支付</h1>
+              <br>
+    <nav>
+      <a href="#about">关于我们</a>
+      <a href="#features">服务优势</a>
+      <a href="https://t.me/modaohuohuo" target="_blank">Telegram</a>
+    </nav>
+  </header>
 
-<canvas id="out" width="300" height="300"></canvas>
+  <section class="hero">
+    <h1>安全、快捷的跨境支付解决方案</h1>
+    <p>为全球用户提供高效、安全的支付体验，支持多种货币结算</p>
+  </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-<script>
-  const canvas = document.getElementById('out');
-  const ctx = canvas.getContext('2d');
-  const size = canvas.width; // 300
-  const textToEncode = 'https://example.com';
+  <section id="features" class="features">
+    <div class="feature">
+      <h3>多币种支持</h3>
+      <p>支持巴西、印度、香港、台湾等主流地区货币结算。</p>
+    </div>
+    <div class="feature">
+      <h3>安全合规</h3>
+      <p>符合国际支付合规标准，资金流转安全透明。</p>
+    </div>
+    <div class="feature">
+      <h3>高效稳定</h3>
+      <p>采用分布式架构，保障高并发支付处理能力。</p>
+    </div>
+  </section>
 
-  // 1) 生成二维码到一个临时 canvas（qrious 会返回 canvas）
-  const qr = new QRious({
-    value: textToEncode,
-    size: size,
-    level: 'H' // 关键：纠错等级设为 H（高）
-  });
-
-  // 把生成的 qr.canvas 绘制到主 canvas
-  ctx.drawImage(qr.canvas, 0, 0);
-
-  // 2) 载入图标并绘制白底 + 图标（异步）
-  const icon = new Image();
-  // 如果是跨域图标，确保服务器允许 CORS 或使用同域图片，否则 toDataURL 会被污点污染
-  icon.crossOrigin = 'anonymous';
-  icon.src = 'https://via.placeholder.com/300x300.png?text=LOGO'; // 换成你的 logo 链接或 dataURL
-  icon.onload = () => {
-    // 比例控制：图标占二维码的比例（0.2 = 20%）
-    const iconRatio = 0.20;
-    const iconSize = Math.floor(size * iconRatio);
-
-    // 白色底的 padding（留白），以防颜色干扰
-    const padding = Math.floor(iconSize * 0.15); // 15% 的内边距
-    const bgSize = iconSize + padding * 2;
-
-    const cx = size / 2;
-    const cy = size / 2;
-    const bgX = Math.round(cx - bgSize / 2);
-    const bgY = Math.round(cy - bgSize / 2);
-
-    // 绘制白色圆角背景（也可以绘制圆形：arc + clip）
-    const radius = Math.round(bgSize * 0.14); // 圆角大小
-    ctx.fillStyle = 'white';
-    roundRect(ctx, bgX, bgY, bgSize, bgSize, radius);
-    ctx.fill();
-
-    // 如果希望更强的分离感可以再加一圈细灰色边框（可选）
-    // ctx.strokeStyle = '#ddd';
-    // ctx.lineWidth = 2;
-    // roundRect(ctx, bgX, bgY, bgSize, bgSize, radius);
-    // ctx.stroke();
-
-    // 绘制 logo（居中，留出 padding）
-    const iconX = Math.round(cx - iconSize / 2);
-    const iconY = Math.round(cy - iconSize / 2);
-
-    // 可选：让 logo 也是圆角显示 —— 用 clip
-    ctx.save();
-    roundRectClip(ctx, iconX, iconY, iconSize, iconSize, Math.round(iconSize * 0.15));
-    ctx.drawImage(icon, iconX, iconY, iconSize, iconSize);
-    ctx.restore();
-
-    // 现在 canvas 包含完整二维码 + 居中 logo，可导出
-    // const dataUrl = canvas.toDataURL('image/png');
-    // console.log(dataUrl);
-  };
-
-  // 绘制圆角矩形（用于白色背景）
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-  }
-
-  // clip 版本（用于把 logo 裁成圆角）
-  function roundRectClip(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-    ctx.clip();
-  }
-</script>
-
+  <footer>
+    <p>&copy; 2025 老虎支付 | 版权所有</p>
+    <div class="admin-login">
+      <a href="https://admin.pay-rx.com">后台管理登录</a>
+    </div>
+  </footer>
 </body>
 </html>

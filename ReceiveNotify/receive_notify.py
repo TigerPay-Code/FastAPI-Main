@@ -255,27 +255,6 @@ async def get_user(user_name: str, conn=Depends(get_mysql_conn)):
     return {"user": row, "query_time_ns": f"查询用户名: {user_name} 耗时: {elapsed_ms:.6f} 毫秒"}
 
 
-# 更新数据 (改)
-@notify.put("/user/{user_id}")
-async def update_user(user_id: int, conn=Depends(get_mysql_conn)):
-    async with conn.cursor() as cur:
-        await cur.execute(
-            "UPDATE users SET email=%s WHERE id=%s",
-            ("new_email@example.com", user_id),
-        )
-        await conn.commit()
-    return {"msg": "user updated"}
-
-
-# 删除数据 (删)
-@notify.delete("/user/{user_id}")
-async def delete_user(user_id: int, conn=Depends(get_mysql_conn)):
-    async with conn.cursor() as cur:
-        await cur.execute("DELETE FROM users WHERE id=%s", (user_id,))
-        await conn.commit()
-    return {"msg": "user deleted"}
-
-
 @notify.post("/transfer")
 async def transfer_money(conn=Depends(get_mysql_conn)):
     """
@@ -314,7 +293,8 @@ async def pay_rx_notify():
 async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
     logger.info(f"收到 【代收】 通知：数据：{notify_in_data}")
 
-    if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds", get_type=int, default=30):
+    if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds", get_type=int,
+                                                                              default=30):
         logger.warning(f"订单号:  {notify_in_data.sysOrderNo} 时间戳异常，可能为重放攻击，拒绝处理")
         return Response(content="timestamp error", media_type="text/plain")
 
