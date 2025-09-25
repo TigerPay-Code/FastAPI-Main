@@ -135,6 +135,7 @@ except Exception as e:
     logger.warning(f"初始化配置时发生错误：{e}")
     public_config = None
 
+
 def initialize_config():
     """
     根据当前操作系统更新配置文件。
@@ -152,46 +153,83 @@ def initialize_config():
         elif os_name.startswith('darwin'):
             system_name = "macOS"
 
-        # 获取当前配置文件中的系统名称
-        current_system = public_config.get(key='software.system', get_type=str)
+        con_data = [
+            [
+                'software', '软件相关配置',
+                [
+                    ['init', '初始化状态', True],
+                    ['system', '操作系统', system_name],
+                    ['app_name', '应用名称', 'FastAPI Receive Pay Notify Service'],
+                    ['version', '版本号', '1.0.00'],
+                    ['debug', '调试模式', False],
+                    ['python_version', 'Python版本', '3.10.12']
+                ]
+            ],
 
-        # 如果配置文件中的系统名称与当前系统不匹配，则进行更新
-        if current_system != system_name:
-            logger.warning(f"检测到系统名称不匹配：当前为 '{system_name}'，配置文件为 '{current_system}'")
-            logger.info("正在更新配置文件...")
+            [
+                'hardware', '硬件相关配置',
+                [
+                    ['init', '初始化状态', True],
+                    ['physical_cores', '物理核心数', 1],
+                    ['logical_cores', '逻辑核心数', 2]
+                ]
+            ],
+            [
+                'database', '数据库相关配置',
+                [
+                    ['init', '初始化状态', True],
+                    ['host', '数据库主机', '127.0.0.1'],
+                    ['port', '数据库端口', 3306],
+                    ['user', '数据库用户名', 'remote'],
+                    ['password', '数据库密码', 'kb7$rL3d8!tQ'],
+                    ['database', '数据库名称', 'fastapi'],
+                    ['charset', '数据库字符集', 'utf8mb4'],
+                    ['minsize', '数据库最小连接数', 5],
+                    ['maxsize', '数据库最大连接数', 20],
+                    ['pool_size', '数据库连接池大小', 10],
+                    ['pool_recycle', '数据库连接池回收时间', 3600]
+                ]
+            ],
+            [
+                'redis', 'Redis相关配置',
+                [
+                    ['init', '初始化状态', True],
+                    ['host', 'Redis主机', '127.0.0.1'],
+                    ['port', 'Redis端口', 6379],
+                    ['password', 'Redis密码', ''],
+                    ['db', 'Redis数据库', 0],
+                    ['max_connections', 'Redis最大连接数', 100],
+                    ['redis_url', 'Redis连接URL', 'redis://127.0.0.1:6379/0'],
+                    ['cache_expire', '缓存过期时间', 600]
+                ]
+            ],
 
-            # 使用 set 方法更新值
-            public_config.set(key='software.system', value=system_name)
+            [
+                'order', '订单相关配置',
+                [
+                    ['delay_seconds', '订单延迟时间', 60]
+                ]
+            ],
 
-            # 保存更改到文件
-            public_config.save()
-            logger.warning("配置文件已更新。")
-        else:
-            logger.warning(f"配置文件已是最新状态，系统名称为 '{system_name}'。")
+            [
+                'telegram', 'Telegram机器人配置',
+                [
+                    ['enable', '是否启用Telegram机器人', True],
+                    ['token', '机器人Token', '8263751942:AAH5rvEopgKEERvUa9peWZ-TnctU230rHUU'],
+                    ['chat_id', '默认聊天ID', 5312177749],
+                    ['admin_chat_id', '管理员聊天ID', 5312177749]
+                ]
+            ]
+        ]
 
-        # 硬件信息初始化
-        if not public_config.get(key='hardware.init', get_type=bool):
-            public_config.set(key='hardware.init', value=True)
-            public_config.save()
-            logger.info("硬件信息初始化完成。")
+        for item in con_data:
+            logger.info(f"开始初始化：{item[1]} ...")
+            for sub_item in item[2]:
+                public_config.set(key=f'{item[0]}.{sub_item[0]}', value=sub_item[2])
+                logger.info(f"设置配置：{item[0]}.{sub_item[0]} = {sub_item[2]}")
 
-        # 软件信息初始化
-        if not public_config.get(key='software.init', get_type=bool):
-            public_config.set(key='software.init', value=True)
-            public_config.save()
-            logger.info("软件信息初始化完成。")
-
-        # 数据库信息初始化
-        if not public_config.get(key='database.init', get_type=bool):
-            public_config.set(key='database.init', value=True)
-            public_config.save()
-            logger.info("数据库信息初始化完成。")
-
-        # Redis信息初始化
-        if not public_config.get(key='redis.init', get_type=bool):
-            public_config.set(key='redis.init', value=True)
-            public_config.save()
-            logger.info("Redis信息初始化完成。")
+        public_config.save()
+        logger.info(f"初始化配置成功！")
 
     except FileNotFoundError as init_file_error:
         logger.warning(f"错误：配置文件未找到，请检查路径。{init_file_error}")

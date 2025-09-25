@@ -219,8 +219,6 @@ async def get_user_profile(user_id: int, conn=Depends(get_mysql_conn)):
     cache_key = f"user:{user_id}"
     cached_data = await get_cache(cache_key)
     if cached_data:
-        logger.info(f"从缓存中获取用户ID: {user_id} 信息")
-
         end = time.perf_counter_ns()
         elapsed_ms = (end - start) / 1_000_000
         logger.info(f"缓存查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
@@ -232,8 +230,7 @@ async def get_user_profile(user_id: int, conn=Depends(get_mysql_conn)):
 
         if user_data:
             # 将查询结果存入缓存，设置过期时间为600秒
-            await set_cache(cache_key, user_data, expire=600)
-
+            await set_cache(cache_key, user_data, expire=public_config.get(key="redis.cache_expire", get_type=int, default=60))
             end = time.perf_counter_ns()
             elapsed_ms = (end - start) / 1_000_000
             logger.info(f"数据库查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
