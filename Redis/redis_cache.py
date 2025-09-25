@@ -3,6 +3,7 @@ import os
 import json
 from typing import Optional, Any
 
+from Config.config_loader import public_config
 from Logger.logger_config import setup_logger
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
@@ -17,18 +18,12 @@ logger.exception("打印异常信息")
 
 logger.critical("打印严重错误信息")
 
-# Redis 连接配置
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-REDIS_DB = int(os.getenv("REDIS_DB", 0))
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
-
 # 创建 Redis 连接池
 redis_pool = redis.ConnectionPool(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    db=REDIS_DB,
-    password=REDIS_PASSWORD,
+    host=public_config.get(key="redis.host", get_type=str),
+    port=public_config.get(key="redis.port", get_type=int),
+    db=public_config.get(key="redis.db", get_type=int),
+    password=public_config.get(key="redis.password", get_type=str),
     decode_responses=True,
     max_connections=20
 )
@@ -43,7 +38,8 @@ async def set_cache(key: str, value: Any, expire: int = 3600) -> bool:
         redis_client = await get_redis()
         await redis_client.setex(key, expire, json.dumps(value))
         return True
-    except Exception:
+    except Exception as err:
+        logger.error(f"设置缓存失败，错误信息：{err}")
         return False
 
 async def get_cache(key: str) -> Optional[Any]:
@@ -54,7 +50,8 @@ async def get_cache(key: str) -> Optional[Any]:
         if value:
             return json.loads(value)
         return None
-    except Exception:
+    except Exception as err:
+        logger.error(f"获取缓存失败，错误信息：{err}")
         return None
 
 async def delete_cache(key: str) -> bool:
@@ -63,5 +60,6 @@ async def delete_cache(key: str) -> bool:
         redis_client = await get_redis()
         await redis_client.delete(key)
         return True
-    except Exception:
+    except Exception as err:
+        logger.error(f"删除缓存失败，错误信息：{err}")
         return False

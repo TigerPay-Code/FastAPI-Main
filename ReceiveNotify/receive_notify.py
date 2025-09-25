@@ -33,6 +33,7 @@ from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
 # 引用数据库异步操作模块
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
 from DataBase.async_redis import redis_manager, get_redis
+from Redis.redis_cache import get_cache, set_cache
 import aiomysql
 
 # 引用日志模块
@@ -211,15 +212,33 @@ async def get_users(
 
 # 查询数据 (查)
 @notify.get("/user/{user_id}")
-async def get_user(user_id: int, conn=Depends(get_mysql_conn)):
+async def get_user_profile(user_id: int, conn=Depends(get_mysql_conn)):
     start = time.perf_counter_ns()
+
+    cache_key = f"user:{user_id}"
+    cached_data = await get_cache(cache_key)
+    if cached_data:
+        logger.info(f"从缓存中获取用户ID: {user_id} 信息")
+
+        end = time.perf_counter_ns()
+        elapsed_ms = (end - start) / 1_000_000
+        logger.info(f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
+        return cached_data
+
     async with conn.cursor(aiomysql.DictCursor) as cur:
         await cur.execute("SELECT id, username, email, balance FROM users WHERE id=%s", (user_id,))
-        row = await cur.fetchone()
-    end = time.perf_counter_ns()
-    elapsed_ms = (end - start) / 1_000_000
-    logger.info(f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
-    return {"user": row, "query_time_ns": f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒"}
+        user_data = await cur.fetchone()
+
+        if user_data:
+            # 将查询结果存入缓存，设置过期时间为600秒
+            await set_cache(cache_key, user_data, expire=600)
+
+            end = time.perf_counter_ns()
+            elapsed_ms = (end - start) / 1_000_000
+            logger.info(f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
+            return user_data
+
+    return None
 
 
 # 查询数据 (查)
