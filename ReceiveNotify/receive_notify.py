@@ -38,6 +38,7 @@ import aiomysql
 
 # 引用日志模块
 from Logger.logger_config import setup_logger
+from Utils.handle_time import get_sec_int_timestamp
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
@@ -312,6 +313,11 @@ async def pay_rx_notify():
 @notify.post("/global_pay_in_notify")
 async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
     logger.info(f"收到 【代收】 通知：数据：{notify_in_data}")
+
+    if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds", get_type=int, default=30):
+        logger.warning(f"订单号:  {notify_in_data.sysOrderNo} 时间戳异常，可能为重放攻击，拒绝处理")
+        return Response(content="timestamp error", media_type="text/plain")
+
     if notify_in_data.state == 2:
         logger.info(f"订单号: {notify_in_data.sysOrderNo} 已成功支付，金额: {notify_in_data.amount}")
         await send_telegram_message(f"订单号: {notify_in_data.sysOrderNo} 已成功支付，金额: {notify_in_data.amount}")
