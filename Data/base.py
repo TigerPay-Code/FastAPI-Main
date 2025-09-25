@@ -6,6 +6,7 @@
 # @IDE       : PyCharm
 # @Function  :
 import os
+import time
 from typing import Optional
 from pydantic import BaseModel, Field
 from Logger.logger_config import setup_logger
@@ -21,6 +22,14 @@ class Pay_RX_Notify_In_Data(BaseModel):
     mchOrderNo: str = Field(title="下游订单号", description="商户订单号", min_length=4, max_length=36)
     amount: int = Field(title="金额", description="单位分", ge=1000, le=1000000)
     extraField: Optional[str] = Field(title="扩展字段", description="可选字段", min_length=0, max_length=32, default=None)
+
+    timestamp: Optional[int ] = Field(
+        title="时间戳",
+        description="可选字段,10位整数时间戳，默认当前时间",
+        ge=1750000000, le=9999999999,
+        default_factory=lambda: int(time.time())
+    )
+
     sign: str = Field(title="签名", description="签名值大写的MD5值", min_length=32, max_length=32)
 
 
