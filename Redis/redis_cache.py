@@ -55,7 +55,7 @@ async def set_cache(key: str, value: Any, expire: int = 3600) -> bool:
         redis_client = await get_redis()
         # 使用自定义编码器序列化数据
         serialized_value = json.dumps(value, cls=CustomJSONEncoder)
-        await redis_client.setex(key, expire, json.dumps(value))
+        await redis_client.setex(key, expire, serialized_value)
         return True
     except Exception as err:
         logger.error(f"设置缓存失败，错误信息：{err}")
