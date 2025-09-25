@@ -67,12 +67,12 @@ redis_cfg = {
 # 应用生命周期事件
 @asynccontextmanager
 async def lifespan_manager(app: FastAPI):
+    logger.info("正在初始化配置文件...")
+    initialize_config()
+
     logger.info(f"当前操作系统：{public_config.get(key='software.system', get_type=str)}")
 
     logger.info(f"服务名称：{app.openapi()['info']['title']}")
-
-    logger.info("正在初始化配置文件...")
-    initialize_config()
 
     logger.info(f"正在启动数据库连接池...")
     await mysql_manager.init_pool(**mysql_cfg)
@@ -117,9 +117,9 @@ async def lifespan_manager(app: FastAPI):
 
 
 notify = FastAPI(
-    title="FastAPI Receive Pay Notify Service",
+    title=public_config.get(key='software.app_name', get_type=str),
     description="接收Pay-RX通知服务",
-    version="1.0.0",
+    version=public_config.get(key='software.version', get_type=str),
     docs_url=None,
     redoc_url=None,
     openapi_url=None,

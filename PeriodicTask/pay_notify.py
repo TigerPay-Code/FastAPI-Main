@@ -11,6 +11,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 import threading
 
+from Config.config_loader import public_config
 from Logger.logger_config import setup_logger
 from Telegram.auto_bot import send_telegram_message
 
@@ -53,7 +54,8 @@ def start_check_balance_task():
         func=run_async_task,
         trigger='cron',
         hour='9-20',  # 只在上午9点到下午8点（20点）之间运行
-        minute='*/30',  # 每隔30分钟运行一次
+        # minute='*/30',  # 每隔30分钟运行一次
+        second=f'*/{public_config.get(key="task.interval", get_type=int, default=60)}',  # 每隔多少秒钟运行一次
         start_date='2025-01-01 00:00:00',  # 任务开始时间 2025-01-01 00:00:00
         end_date='2025-12-31 23:59:59'  # 任务结束时间 2025-12-31 23:59:59
     )

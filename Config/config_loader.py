@@ -155,7 +155,7 @@ def initialize_config():
 
         con_data = [
             [
-                'software', '软件相关配置',
+                'software', '软件配置',
                 [
                     ['init', '初始化状态', True],
                     ['system', '操作系统', system_name],
@@ -167,15 +167,16 @@ def initialize_config():
             ],
 
             [
-                'hardware', '硬件相关配置',
+                'hardware', '硬件配置',
                 [
                     ['init', '初始化状态', True],
                     ['physical_cores', '物理核心数', 1],
                     ['logical_cores', '逻辑核心数', 2]
                 ]
             ],
+
             [
-                'database', '数据库相关配置',
+                'database', '数据库配置',
                 [
                     ['init', '初始化状态', True],
                     ['host', '数据库主机', '127.0.0.1'],
@@ -190,8 +191,9 @@ def initialize_config():
                     ['pool_recycle', '数据库连接池回收时间', 3600]
                 ]
             ],
+
             [
-                'redis', 'Redis相关配置',
+                'redis', 'Redis配置',
                 [
                     ['init', '初始化状态', True],
                     ['host', 'Redis主机', '127.0.0.1'],
@@ -205,9 +207,16 @@ def initialize_config():
             ],
 
             [
-                'order', '订单相关配置',
+                'order', '订单配置',
                 [
                     ['delay_seconds', '订单延迟时间', 60]
+                ]
+            ],
+
+            [
+                'task', '自动任务配置',
+                [
+                    ['interval', '任务间隔时间 (秒)', 1800]
                 ]
             ],
 
