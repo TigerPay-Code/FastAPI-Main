@@ -24,7 +24,7 @@ push_msg_thread = None
 
 async def check_pending_payments():
     try:
-        message = '每分钟检查一次未处理支付通知的任务执行了。'
+        message = f'每{public_config.get(key="task.interval", get_type=int, default=60)}秒钟检查一次未处理支付通知的任务执行了。'
         logger.info(message)
         await send_telegram_message(message)
     except Exception as e:
