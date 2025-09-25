@@ -209,32 +209,6 @@ async def get_users(
     )
 
 
-@notify.get("/mysql")
-async def test_mysql(conn=Depends(get_mysql_conn)):
-    async with conn.cursor() as cur:
-        await cur.execute("SELECT NOW()")
-        row = await cur.fetchone()
-    return {"mysql_time": row[0].isoformat()}
-
-
-@notify.get("/redis")
-async def test_redis(redis=Depends(get_redis)):
-    await redis.set("fastapi:test", "hello", ex=10)
-    val = await redis.get("fastapi:test")
-    return {"redis_value": val}
-
-
-@notify.post("/user")
-async def create_user(conn=Depends(get_mysql_conn)):
-    async with conn.cursor() as cur:
-        await cur.execute(
-            "INSERT INTO users (username, email) VALUES (%s, %s)",
-            ("alice", "alice@example.com"),
-        )
-        await conn.commit()  # 提交事务
-    return {"msg": "user created"}
-
-
 # 查询数据 (查)
 @notify.get("/user/{user_id}")
 async def get_user(user_id: int, conn=Depends(get_mysql_conn)):
