@@ -222,7 +222,7 @@ async def get_user_profile(user_id: int, conn=Depends(get_mysql_conn)):
 
         end = time.perf_counter_ns()
         elapsed_ms = (end - start) / 1_000_000
-        logger.info(f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
+        logger.info(f"缓存查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
         return cached_data
 
     async with conn.cursor(aiomysql.DictCursor) as cur:
@@ -235,7 +235,7 @@ async def get_user_profile(user_id: int, conn=Depends(get_mysql_conn)):
 
             end = time.perf_counter_ns()
             elapsed_ms = (end - start) / 1_000_000
-            logger.info(f"查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
+            logger.info(f"数据库查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
             return user_data
 
     return None
