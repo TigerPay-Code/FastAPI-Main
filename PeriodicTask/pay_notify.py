@@ -41,27 +41,12 @@ def start_check_balance_task():
     scheduler = BackgroundScheduler()
 
     # 全天24小时不停地每30分钟执行一次任务
-    # scheduler.add_job(
-    #     func=run_async_task,  # 直接传递函数引用，而不是调用结果
-    #     trigger='interval',
-    #     minutes=30,
-    #     start_date='2025-01-01 00:00:00',
-    #     end_date='2025-12-31 23:59:59'
-    # )
-
-
-    time_gap = f"*/{public_config.get(key='task.interval', get_type=int, default=60)/60}"
-    print(time_gap)
-
-    # 只在每天的上午9点到20点之间，每30分钟执行一次任务
     scheduler.add_job(
-        func=run_async_task,
-        trigger='cron',
-        hour='9-20',  # 只在上午9点到下午8点（20点）之间运行
-        minute='*/30',  # 每隔多少分钟运行一次
-        # second=time_gap,  # 每隔多少秒钟运行一次
-        start_date='2025-01-01 00:00:00',  # 任务开始时间 2025-01-01 00:00:00
-        end_date='2025-12-31 23:59:59'  # 任务结束时间 2025-12-31 23:59:59
+        func=run_async_task,  # 直接传递函数引用，而不是调用结果
+        trigger='interval',
+        seconds=public_config.get(key='task.interval', get_type=int, default=60),
+        start_date='2025-01-01 00:00:00',
+        end_date='2025-12-31 23:59:59'
     )
 
     scheduler.add_job(
@@ -70,7 +55,6 @@ def start_check_balance_task():
         hour='12',
         minute='49'
     )
-
     scheduler.add_job(
         func=run_async_task,
         trigger='cron',
