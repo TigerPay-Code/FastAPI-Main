@@ -52,14 +52,20 @@ def start_check_balance_task():
     scheduler.add_job(
         func=run_async_task,
         trigger='cron',
+        day_of_week='mon-fri',
         hour='12',
-        minute='49'
+        minute='49',
+        start_date = '2025-01-01 00:00:00',
+        end_date='2025-12-31 23:59:59'
     )
     scheduler.add_job(
         func=run_async_task,
         trigger='cron',
+        day_of_week='mon-fri',
         hour='12',
-        minute='50'
+        minute='50',
+        start_date = '2025-01-01 00:00:00',
+        end_date='2025-12-31 23:59:59'
     )
 
     scheduler.start()
@@ -84,7 +90,7 @@ def stop_periodic_task():
     """
     global scheduler, push_msg_thread
     if scheduler:
-        scheduler.shutdown()
+        scheduler.shutdown(wait=True)
         scheduler = None
     if push_msg_thread:
         push_msg_thread = None
