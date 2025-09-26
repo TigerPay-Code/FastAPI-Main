@@ -314,11 +314,11 @@ async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
         return re_data
 
     if notify_in_data.state == 2:
-        logger.info(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100}元")
-        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100}元")
+        logger.info(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100:.2f}元")
+        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100:.2f}元")
     else:
-        logger.error(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100}元")
-        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100}元")
+        logger.error(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100:.2f}元")
+        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100:.2f}元")
     return re_data
 
 
@@ -330,11 +330,11 @@ async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
         "msg": "success",
     }
     if notify_out_data.state == 2:
-        logger.info(f"代付订单号: {notify_out_data.mchOrderNo} 已成功代付，金额: {notify_out_data.amount/100}元")
-        await send_telegram_message(f"订单号: {notify_out_data.mchOrderNo} 已成功代付，金额: {notify_out_data.amount/100}元")
+        logger.info(f"代付订单号: {notify_out_data.mchOrderNo} 已成功代付，金额: {notify_out_data.amount/100:.2f}元")
+        await send_telegram_message(f"订单号: {notify_out_data.mchOrderNo} 已成功代付，金额: {notify_out_data.amount/100:.2f}元")
     else:
-        logger.error(f"代付订单号: {notify_out_data.mchOrderNo} 代付失败，金额: {notify_out_data.amount/100}元")
-        await send_telegram_message(f"订单号: {notify_out_data.mchOrderNo} 代付失败，金额: {notify_out_data.amount/100}元")
+        logger.error(f"代付订单号: {notify_out_data.mchOrderNo} 代付失败，金额: {notify_out_data.amount/100:.2f}元")
+        await send_telegram_message(f"订单号: {notify_out_data.mchOrderNo} 代付失败，金额: {notify_out_data.amount/100:.2f}元")
     return re_data
 
 
@@ -346,11 +346,11 @@ async def handle_global_refund_notify(notify_refund_data: Pay_RX_Notify_Refund_D
         "msg": "success",
     }
     if notify_refund_data.state == 2:
-        logger.info(f"退款订单号: {notify_refund_data.mchOrderNo} 已成功退款，金额: {notify_refund_data.amount/100}元")
+        logger.info(f"退款订单号: {notify_refund_data.mchOrderNo} 已成功退款，金额: {notify_refund_data.amount/100:.2f}元")
         await send_telegram_message(
-            f"退款订单号: {notify_refund_data.mchOrderNo} 已成功退款，金额: {notify_refund_data.amount/100}元")
+            f"退款订单号: {notify_refund_data.mchOrderNo} 已成功退款，金额: {notify_refund_data.amount/100:.2f}元")
     else:
-        logger.error(f"退款订单号: {notify_refund_data.mchOrderNo} 退款失败，金额: {notify_refund_data.amount/100}元")
+        logger.error(f"退款订单号: {notify_refund_data.mchOrderNo} 退款失败，金额: {notify_refund_data.amount/100:.2f}元")
         await send_telegram_message(
-            f"退款订单号: {notify_refund_data.mchOrderNo} 退款失败，金额: {notify_refund_data.amount/100}元")
+            f"退款订单号: {notify_refund_data.mchOrderNo} 退款失败，金额: {notify_refund_data.amount/100:.2f}元")
     return re_data
