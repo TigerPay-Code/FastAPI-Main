@@ -301,7 +301,7 @@ async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
         re_data["msg"] = "timestamp error"
         return re_data
 
-    if notify_in_data.state in [0, 1, 2, 3]:
+    if notify_in_data.state not in [0, 1, 2, 3]:
         logger.warning(f"订单号:  {notify_in_data.sysOrderNo} 状态异常，可能为重放攻击，拒绝处理")
         re_data["code"] = 1
         re_data["msg"] = "state error"
