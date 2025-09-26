@@ -64,7 +64,6 @@ def generate_post_sign(
 
     # 3. 拼接密钥（格式：key1=val1&key2=val2&key=secret_key）
     sign_str = connect.join(params) + f"{connect}{secure_key_name}={secure_key}"
-    print(sign_str)
 
     # 4. MD5 加密并根据 upper 参数转换大小写
     sign = get_str_md5(sign_str).upper() if is_upper else get_str_md5(sign_str)  # 关键修改点
