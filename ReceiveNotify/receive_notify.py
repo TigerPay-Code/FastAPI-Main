@@ -296,29 +296,29 @@ async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
     }
 
     if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds", get_type=int, default=30):
-        logger.warning(f"订单号:  {notify_in_data.sysOrderNo} 时间戳异常，可能为重放攻击，拒绝处理")
+        logger.warning(f"订单号:  {notify_in_data.mchOrderNo} 时间戳异常，可能为重放攻击，拒绝处理")
         re_data["code"] = 1
         re_data["msg"] = "timestamp error"
         return re_data
 
     if notify_in_data.state not in [0, 1, 2, 3]:
-        logger.warning(f"订单号:  {notify_in_data.sysOrderNo} 状态异常，可能为重放攻击，拒绝处理")
+        logger.warning(f"订单号:  {notify_in_data.mchOrderNo} 状态异常，可能为重放攻击，拒绝处理")
         re_data["code"] = 1
         re_data["msg"] = "state error"
         return re_data
 
     if notify_in_data.amount < 500 or notify_in_data.amount > 1000000:
-        logger.warning(f"订单号:  {notify_in_data.sysOrderNo} 金额异常，可能为重放攻击，拒绝处理")
+        logger.warning(f"订单号:  {notify_in_data.mchOrderNo} 金额异常，可能为重放攻击，拒绝处理")
         re_data["code"] = 1
         re_data["msg"] = "amount error"
         return re_data
 
     if notify_in_data.state == 2:
         logger.info(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100}元")
-        await send_telegram_message(f"订单号: {notify_in_data.sysOrderNo} 已成功支付，金额: {notify_in_data.amount/100}元")
+        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100}元")
     else:
         logger.error(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100}元")
-        await send_telegram_message(f"订单号: {notify_in_data.sysOrderNo} 支付失败，金额: {notify_in_data.amount/100}元")
+        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100}元")
     return re_data
 
 
