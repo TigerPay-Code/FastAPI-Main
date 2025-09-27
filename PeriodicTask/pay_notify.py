@@ -42,9 +42,11 @@ def start_check_balance_task():
 
     # 全天24小时不停地每30分钟执行一次任务
     scheduler.add_job(
-        func=run_async_task,  # 直接传递函数引用，而不是调用结果
-        trigger='interval',
-        seconds=public_config.get(key='task.interval', get_type=int, default=60),
+        func=run_async_task,
+        trigger='cron',
+        day_of_week='mon-fri',
+        hour='9-18',  # From 9:00 AM to 6:59 PM
+        minute='*/30',  # Every 30 minutes (equivalent to 1800 seconds)
         start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59'
     )
