@@ -24,6 +24,8 @@ push_msg_thread = None
 
 
 async def check_pending_payments():
+    """检查未处理支付通知的异步任务"""
+    logger.info("检查未处理支付通知的异步任务")
     try:
         time_gap = public_config.get(key="task.interval", get_type=int, default=60)
         message = f'每{time_gap}秒钟检查一次未处理支付通知的任务执行了。'
@@ -39,6 +41,7 @@ def run_async_task():
 
 
 def start_check_balance_task():
+    """启动检查余额的定时任务"""
     global scheduler
 
     beijing_tz = pytz.timezone('Asia/Shanghai')
