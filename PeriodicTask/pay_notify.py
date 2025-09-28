@@ -27,12 +27,21 @@ async def check_pending_payments():
     """检查未处理支付通知的异步任务"""
     logger.info("检查未处理支付通知的异步任务")
     try:
+        # 这里应该添加实际的支付检查逻辑
+        # 例如：查询数据库中的待处理支付
+
         time_gap = public_config.get(key="task.interval", get_type=int, default=60)
         message = f'每{time_gap}秒钟检查一次未处理支付通知的任务执行了。'
         logger.info(message)
-        await send_telegram_message(message)
+
+        # 确保Telegram已启用
+        if public_config and public_config.get(key='telegram.enable', get_type=bool):
+            await send_telegram_message(message)
     except Exception as e:
         logger.error(f"定时任务执行出错: {e}")
+        # 确保Telegram已启用
+        if public_config and public_config.get(key='telegram.enable', get_type=bool):
+            await send_telegram_message(f"定时任务执行出错: {e}")
 
 
 def run_async_task():
@@ -44,6 +53,9 @@ def run_async_task():
         loop.close()
     except Exception as e:
         logger.error(f"运行异步任务时出错: {e}")
+        # 确保Telegram已启用
+        if public_config and public_config.get(key='telegram.enable', get_type=bool):
+            asyncio.run(send_telegram_message(f"运行异步任务时出错: {e}"))
 
 
 def start_check_balance_task():
@@ -54,15 +66,15 @@ def start_check_balance_task():
 
     scheduler = BackgroundScheduler()
 
+    # 获取配置中的时间间隔，默认为60秒
+    interval_minutes = public_config.get(key="task.interval", get_type=int, default=60) // 60
     job1 = scheduler.add_job(
         func=run_async_task,
-        trigger='cron',
-        day_of_week='mon-fri',
-        hour='9-18',
-        minute=f'*/{public_config.get(key="task.interval", get_type=int, default=60)/60}',
+        trigger='interval',
+        minutes=interval_minutes,
         timezone=beijing_tz
     )
-    logger.info(f"添加Job1: 每30分钟触发")
+    logger.info(f"添加Job1: 每{interval_minutes}分钟触发")
 
     job2 = scheduler.add_job(
         func=run_async_task,
@@ -86,6 +98,10 @@ def start_check_balance_task():
 
     scheduler.start()
     logger.info("定时任务调度器已启动")
+
+    # 确保Telegram已启用
+    if public_config and public_config.get(key='telegram.enable', get_type=bool):
+        asyncio.run(send_telegram_message("定时任务调度器已启动"))
 
 
 def start_periodic_task():
@@ -116,5 +132,12 @@ def stop_periodic_task():
         if push_msg_thread:
             push_msg_thread = None
         logger.info("定时任务调度器已停止")
+
+        # 确保Telegram已启用
+        if public_config and public_config.get(key='telegram.enable', get_type=bool):
+            asyncio.run(send_telegram_message("定时任务调度器已停止"))
     except Exception as e:
         logger.error(f"停止定时任务时出错: {e}")
+        # 确保Telegram已启用
+        if public_config and public_config.get(key='telegram.enable', get_type=bool):
+            asyncio.run(send_telegram_message(f"停止定时任务时出错: {e}"))
