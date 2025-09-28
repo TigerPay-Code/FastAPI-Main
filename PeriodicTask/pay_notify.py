@@ -119,7 +119,8 @@ def start_check_balance_task():
 
     # 获取配置中的时间间隔，默认为60秒
     interval_seconds = public_config.get(key="task.interval", get_type=int, default=60)
-    interval_minutes = interval_seconds // 60
+    # interval_minutes = interval_seconds // 60
+    interval_minutes = 2
 
     # 创建组合触发器：周一到周五 + 9:00-19:00 + 间隔时间
     job1_trigger = AndTrigger([
@@ -179,6 +180,11 @@ def start_check_balance_task():
                 f"定时任务调度器已启动，配置了{len(scheduler.get_jobs())}个任务\n"
                 f"支付检查任务执行时间：周一到周五 9:00-19:00，每{interval_minutes}分钟一次"
             ))
+
+        logger.info("手动执行一次 job1 任务进行调试")
+        run_async_task()
+        logger.info("手动执行一次 job2 任务进行调试")
+        run_async_have_lunch_task()
     except Exception as e:
         logger.error(f"启动定时任务时出错: {e}")
         # 尝试发送错误通知
