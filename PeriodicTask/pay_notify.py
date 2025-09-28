@@ -78,6 +78,15 @@ async def check_pending_payments():
             await send_telegram_message(f"定时任务执行出错: {e}")
 
 
+def start_periodic_task():
+    """
+    启动周期性任务调度器。
+    """
+    logger.info('启动周期性任务调度器。')
+    start_check_balance_task()
+    logger.info('周期性任务调度器已启动。')
+
+
 def run_async_task():
     """在单独的事件循环中运行异步任务"""
     logger.info(">>> run_async_task() 被调用 <<<")
@@ -196,18 +205,6 @@ def start_check_balance_task():
                 safe_async_run(send_telegram_message(f"启动定时任务时出错: {e}"))
         except Exception as te:
             logger.error(f"发送Telegram错误消息失败: {te}")
-
-
-def start_periodic_task():
-    global push_msg_thread
-    """
-    启动周期性任务调度器。
-    """
-    logger.info('启动周期性任务调度器。')
-    if not push_msg_thread:
-        push_msg_thread = threading.Thread(target=start_check_balance_task, daemon=True)
-        push_msg_thread.start()
-        logger.info('周期性任务调度器已启动。')
 
 
 def stop_periodic_task():
