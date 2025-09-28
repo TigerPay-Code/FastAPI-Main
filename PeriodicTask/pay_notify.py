@@ -41,13 +41,15 @@ def start_check_balance_task():
     scheduler = BackgroundScheduler()
 
     scheduler.add_job(
-        func=run_async_task,
-        trigger='cron',
+        func=run_async_task,  # 要执行的异步函数
+        # args=(),  # 异步函数的参数
+        trigger='cron',  # 触发器类型
         day_of_week='mon-fri',  # 星期一到星期五
         hour='9-18',  # 早上9点到晚上6点
         minute='*/30',  # Every 30 minutes (equivalent to 1800 seconds)
-        start_date='2025-01-01 00:00:00',
-        end_date='2025-12-31 23:59:59'
+        start_date='2025-01-01 00:00:00',  # 任务开始时间
+        end_date='2025-12-31 23:59:59', # 任务结束时间
+        misfire_grace_time=60 # 如果错过了执行时间点，在60秒内仍然尝试执行
     )
 
     scheduler.add_job(
@@ -57,7 +59,8 @@ def start_check_balance_task():
         hour='12',
         minute='49',
         start_date = '2025-01-01 00:00:00',
-        end_date='2025-12-31 23:59:59'
+        end_date='2025-12-31 23:59:59',
+        misfire_grace_time=60 # 如果错过了执行时间点，在60秒内仍然尝试执行
     )
     scheduler.add_job(
         func=run_async_task,
@@ -66,7 +69,8 @@ def start_check_balance_task():
         hour='12',
         minute='50',
         start_date = '2025-01-01 00:00:00',
-        end_date='2025-12-31 23:59:59'
+        end_date='2025-12-31 23:59:59',
+        misfire_grace_time=60 # 如果错过了执行时间点，在60秒内仍然尝试执行
     )
 
     scheduler.start()

@@ -155,7 +155,7 @@ async def get_users(
     offset = (page - 1) * per_page
 
     # 从缓存中获取数据
-    cache_key = "all_users_list_cache"
+    cache_key = f"users_list:page_{page}:per_page_{per_page}"
     cached_data = await redis.get(cache_key)
 
     users = None
