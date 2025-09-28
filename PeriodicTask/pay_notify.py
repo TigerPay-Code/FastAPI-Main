@@ -8,6 +8,7 @@
 import asyncio
 import os
 
+import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 import threading
 
@@ -39,6 +40,9 @@ def run_async_task():
 
 def start_check_balance_task():
     global scheduler
+
+    beijing_tz = pytz.timezone('Asia/Shanghai')
+
     scheduler = BackgroundScheduler()
 
     scheduler.add_job(
@@ -50,7 +54,8 @@ def start_check_balance_task():
         minute='*/30',  # Every 30 minutes (equivalent to 1800 seconds)
         start_date='2025-01-01 00:00:00',  # 任务开始时间
         end_date='2025-12-31 23:59:59',  # 任务结束时间
-        misfire_grace_time=60  # 如果错过了执行时间点，在60秒内仍然尝试执行
+        misfire_grace_time=60,  # 如果错过了执行时间点，在60秒内仍然尝试执行
+        timezone=beijing_tz  # 时区
     )
 
     scheduler.add_job(
@@ -61,7 +66,8 @@ def start_check_balance_task():
         minute='49',
         start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59',
-        misfire_grace_time=60  # 如果错过了执行时间点，在60秒内仍然尝试执行
+        misfire_grace_time=60,  # 如果错过了执行时间点，在60秒内仍然尝试执行
+        timezone=beijing_tz  # 时区
     )
     scheduler.add_job(
         func=run_async_task,
@@ -71,7 +77,8 @@ def start_check_balance_task():
         minute='50',
         start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59',
-        misfire_grace_time=60  # 如果错过了执行时间点，在60秒内仍然尝试执行
+        misfire_grace_time=60,  # 如果错过了执行时间点，在60秒内仍然尝试执行
+        timezone=beijing_tz  # 时区
     )
 
     scheduler.start()
