@@ -105,6 +105,7 @@ def stop_periodic_task():
     停止周期性任务调度器。
     """
     global scheduler, push_msg_thread
+
     if scheduler:
         scheduler.shutdown(wait=True)
         scheduler = None
