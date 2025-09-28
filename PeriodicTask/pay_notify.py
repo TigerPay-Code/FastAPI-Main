@@ -54,7 +54,7 @@ def run_async_have_lunch_task():
         logger.error(f"运行异步任务[提醒吃午饭]时出错: {e}")
         # 确保Telegram已启用
         if public_config and public_config.get(key='telegram.enable', get_type=bool):
-            asyncio.run(send_telegram_message(f"运行异步任务[提醒吃午饭]时出错: {e}"))
+            safe_async_run(send_telegram_message(f"运行异步任务[提醒吃午饭]时出错: {e}"))
 
 
 async def check_pending_payments():
@@ -87,9 +87,20 @@ def run_async_task():
         loop.close()
     except Exception as e:
         logger.error(f"运行异步任务时出错: {e}")
-        # 确保Telegram已启用
         if public_config and public_config.get(key='telegram.enable', get_type=bool):
-            asyncio.run(send_telegram_message(f"运行异步任务时出错: {e}"))
+            safe_async_run(send_telegram_message(f"运行异步任务时出错: {e}"))
+
+
+def safe_async_run(coro):
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(coro)
+    except Exception as e:
+        logger.error(f"执行异步任务出错: {e}")
+    finally:
+        loop.close()
+
 
 
 def is_working_hours():
@@ -124,7 +135,7 @@ def start_check_balance_task():
 
     # 创建组合触发器：周一到周五 + 9:00-19:00 + 间隔时间
     job1_trigger = AndTrigger([
-        CronTrigger(day_of_week='mon-fri', hour='9-18', timezone=beijing_tz),
+        CronTrigger(day_of_week='mon-sun', hour='9-18', timezone=beijing_tz),
         IntervalTrigger(minutes=interval_minutes, timezone=beijing_tz)
     ])
 
@@ -167,16 +178,9 @@ def start_check_balance_task():
         scheduler.start()
         logger.info("定时任务调度器已启动")
 
-        # 立即执行一次任务，但只在工作时间内
-        if is_working_hours():
-            run_async_task()
-            logger.info("立即执行了一次支付检查任务（在工作时间内）")
-        else:
-            logger.info("当前非工作时间，跳过立即执行支付检查任务")
-
         # 发送启动通知
         if public_config and public_config.get(key='telegram.enable', get_type=bool):
-            asyncio.run(send_telegram_message(
+            safe_async_run(send_telegram_message(
                 f"定时任务调度器已启动，配置了{len(scheduler.get_jobs())}个任务\n"
                 f"支付检查任务执行时间：周一到周五 9:00-19:00，每{interval_minutes}分钟一次"
             ))
@@ -190,11 +194,11 @@ def start_check_balance_task():
         # 尝试发送错误通知
         try:
             if public_config and public_config.get(key='telegram.enable', get_type=bool):
-                asyncio.run(send_telegram_message(f"启动定时任务时出错: {e}"))
+                safe_async_run(send_telegram_message(f"启动定时任务时出错: {e}"))
         except Exception as te:
             logger.error(f"发送Telegram错误消息失败: {te}")
 
-    asyncio.run(send_telegram_message("测试立即发送：job1调试消息"))
+    safe_async_run(send_telegram_message("测试立即发送：job1调试消息"))
 
 
 def start_periodic_task():
@@ -225,9 +229,9 @@ def stop_periodic_task():
 
         # 确保Telegram已启用
         if public_config and public_config.get(key='telegram.enable', get_type=bool):
-            asyncio.run(send_telegram_message("定时任务调度器已停止"))
+            safe_async_run(send_telegram_message("定时任务调度器已停止"))
     except Exception as e:
         logger.error(f"停止定时任务时出错: {e}")
         # 确保Telegram已启用
         if public_config and public_config.get(key='telegram.enable', get_type=bool):
-            asyncio.run(send_telegram_message(f"停止定时任务时出错: {e}"))
+            safe_async_run(send_telegram_message(f"停止定时任务时出错: {e}"))
