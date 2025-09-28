@@ -37,14 +37,13 @@ async def check_pending_payments():
 
 def run_async_task():
     """在单独的事件循环中运行异步任务"""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         loop.run_until_complete(check_pending_payments())
-    except Exception as e:
-        logger.error(f"执行异步任务时出错: {e}")
-    finally:
         loop.close()
+    except Exception as e:
+        logger.error(f"运行异步任务时出错: {e}")
 
 
 def start_check_balance_task():
@@ -60,7 +59,7 @@ def start_check_balance_task():
         trigger='cron',
         day_of_week='mon-fri',
         hour='9-18',
-        minute='*/30',
+        minute=f'*/{public_config.get(key="task.interval", get_type=int, default=60)/60}',
         timezone=beijing_tz
     )
     logger.info(f"添加Job1: 每30分钟触发")
@@ -105,11 +104,17 @@ def stop_periodic_task():
     """
     停止周期性任务调度器。
     """
+    """
+        停止周期性任务调度器。
+        """
     global scheduler, push_msg_thread
 
-    if scheduler:
-        scheduler.shutdown(wait=True)
-        scheduler = None
-    if push_msg_thread:
-        push_msg_thread = None
-    logger.info("定时任务调度器已停止")
+    try:
+        if scheduler:
+            scheduler.shutdown(wait=True)
+            scheduler = None
+        if push_msg_thread:
+            push_msg_thread = None
+        logger.info("定时任务调度器已停止")
+    except Exception as e:
+        logger.error(f"停止定时任务时出错: {e}")
