@@ -24,7 +24,8 @@ push_msg_thread = None
 
 async def check_pending_payments():
     try:
-        message = f'每{public_config.get(key="task.interval", get_type=int, default=60)}秒钟检查一次未处理支付通知的任务执行了。'
+        time_gap = public_config.get(key="task.interval", get_type=int, default=60)
+        message = f'每{time_gap}秒钟检查一次未处理支付通知的任务执行了。'
         logger.info(message)
         await send_telegram_message(message)
     except Exception as e:
@@ -48,8 +49,8 @@ def start_check_balance_task():
         hour='9-18',  # 早上9点到晚上6点
         minute='*/30',  # Every 30 minutes (equivalent to 1800 seconds)
         start_date='2025-01-01 00:00:00',  # 任务开始时间
-        end_date='2025-12-31 23:59:59', # 任务结束时间
-        misfire_grace_time=60 # 如果错过了执行时间点，在60秒内仍然尝试执行
+        end_date='2025-12-31 23:59:59',  # 任务结束时间
+        misfire_grace_time=60  # 如果错过了执行时间点，在60秒内仍然尝试执行
     )
 
     scheduler.add_job(
@@ -58,9 +59,9 @@ def start_check_balance_task():
         day_of_week='mon-fri',
         hour='12',
         minute='49',
-        start_date = '2025-01-01 00:00:00',
+        start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59',
-        misfire_grace_time=60 # 如果错过了执行时间点，在60秒内仍然尝试执行
+        misfire_grace_time=60  # 如果错过了执行时间点，在60秒内仍然尝试执行
     )
     scheduler.add_job(
         func=run_async_task,
@@ -68,9 +69,9 @@ def start_check_balance_task():
         day_of_week='mon-fri',
         hour='12',
         minute='50',
-        start_date = '2025-01-01 00:00:00',
+        start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59',
-        misfire_grace_time=60 # 如果错过了执行时间点，在60秒内仍然尝试执行
+        misfire_grace_time=60  # 如果错过了执行时间点，在60秒内仍然尝试执行
     )
 
     scheduler.start()
