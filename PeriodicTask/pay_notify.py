@@ -130,6 +130,8 @@ def start_check_balance_task():
     job1 = scheduler.add_job(
         func=run_async_task,
         trigger=job1_trigger,
+        start_date='2025-01-01 00:00:00',
+        end_date='2025-12-31 23:59:59',
         id='payment_check_job'
     )
     logger.info(f"添加Job1: 周一到周五 9:00-19:00，每{interval_minutes}分钟触发一次")
