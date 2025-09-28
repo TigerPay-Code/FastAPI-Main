@@ -194,6 +194,8 @@ def start_check_balance_task():
         except Exception as te:
             logger.error(f"发送Telegram错误消息失败: {te}")
 
+    asyncio.run(send_telegram_message("测试立即发送：job1调试消息"))
+
 
 def start_periodic_task():
     global push_msg_thread
