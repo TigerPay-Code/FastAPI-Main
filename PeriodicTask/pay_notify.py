@@ -40,12 +40,11 @@ def start_check_balance_task():
     global scheduler
     scheduler = BackgroundScheduler()
 
-    # 全天24小时不停地每30分钟执行一次任务
     scheduler.add_job(
         func=run_async_task,
         trigger='cron',
-        day_of_week='mon-fri',
-        hour='9-18',  # From 9:00 AM to 6:59 PM
+        day_of_week='mon-fri',  # 星期一到星期五
+        hour='9-18',  # 早上9点到晚上6点
         minute='*/30',  # Every 30 minutes (equivalent to 1800 seconds)
         start_date='2025-01-01 00:00:00',
         end_date='2025-12-31 23:59:59'
