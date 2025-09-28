@@ -63,7 +63,7 @@ def start_check_balance_task():
         minute='*/30',
         timezone=beijing_tz
     )
-    logger.info(f"添加Job1: 每30分钟触发, 下次运行时间: {job1.next_run_time}")
+    logger.info(f"添加Job1: 每30分钟触发")
 
     job2 = scheduler.add_job(
         func=run_async_task,
@@ -73,7 +73,7 @@ def start_check_balance_task():
         minute='49',
         timezone=beijing_tz
     )
-    logger.info(f"添加Job2: 12:49触发, 下次运行时间: {job2.next_run_time}")
+    logger.info(f"添加Job2: 12:49触发")
 
     job3 = scheduler.add_job(
         func=run_async_task,
@@ -83,7 +83,7 @@ def start_check_balance_task():
         minute='50',
         timezone=beijing_tz
     )
-    logger.info(f"添加Job3: 12:50触发, 下次运行时间: {job3.next_run_time}")
+    logger.info(f"添加Job3: 12:50触发")
 
     scheduler.start()
     logger.info("定时任务调度器已启动")
