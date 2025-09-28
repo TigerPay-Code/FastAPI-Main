@@ -187,7 +187,7 @@ async def get_users(
             await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
 
     # 计算总页数
-    total_pages = ceil(total_users / per_page)
+    total_pages = int(ceil(total_users / per_page))
 
     # 分页信息
     pagination = {
