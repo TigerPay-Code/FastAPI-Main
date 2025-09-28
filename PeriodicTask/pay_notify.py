@@ -115,6 +115,11 @@ def start_periodic_task():
         push_msg_thread.start()
         logger.info('周期性任务调度器已启动。')
 
+        # 确保Telegram已启用
+        if public_config and public_config.get(key='telegram.enable', get_type=bool):
+            asyncio.run(send_telegram_message("周期性任务调度器已启动。"))
+
+
 
 def stop_periodic_task():
     """
