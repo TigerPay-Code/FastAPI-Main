@@ -59,7 +59,7 @@ def run_async_have_lunch_task():
 
 async def check_pending_payments():
     """检查未处理支付通知的异步任务"""
-    logger.info("检查未处理支付通知的异步任务")
+    logger.info(">>> check_pending_payments() 被调用 <<<")
     try:
         # 这里应该添加实际的支付检查逻辑
         # 例如：查询数据库中的待处理支付
@@ -80,6 +80,7 @@ async def check_pending_payments():
 
 def run_async_task():
     """在单独的事件循环中运行异步任务"""
+    logger.info(">>> run_async_task() 被调用 <<<")
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -100,7 +101,6 @@ def safe_async_run(coro):
         logger.error(f"执行异步任务出错: {e}")
     finally:
         loop.close()
-
 
 
 def is_working_hours():
@@ -176,6 +176,7 @@ def start_check_balance_task():
 
     try:
         scheduler.start()
+        logger.info(f"当前注册的任务：{scheduler.get_jobs()}")
         logger.info("定时任务调度器已启动")
 
         # 发送启动通知
@@ -185,10 +186,8 @@ def start_check_balance_task():
                 f"支付检查任务执行时间：周一到周五 9:00-19:00，每{interval_minutes}分钟一次"
             ))
 
-        logger.info("手动执行一次 job1 任务进行调试")
-        run_async_task()
-        logger.info("手动执行一次 job2 任务进行调试")
-        run_async_have_lunch_task()
+        logger.info("测试直接发送 Telegram 消息")
+        safe_async_run(send_telegram_message("✅ 测试：调度线程中直接发送 Telegram 成功"))
     except Exception as e:
         logger.error(f"启动定时任务时出错: {e}")
         # 尝试发送错误通知
@@ -197,8 +196,6 @@ def start_check_balance_task():
                 safe_async_run(send_telegram_message(f"启动定时任务时出错: {e}"))
         except Exception as te:
             logger.error(f"发送Telegram错误消息失败: {te}")
-
-    safe_async_run(send_telegram_message("测试立即发送：job1调试消息"))
 
 
 def start_periodic_task():
