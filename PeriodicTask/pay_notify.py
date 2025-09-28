@@ -37,7 +37,14 @@ async def check_pending_payments():
 
 def run_async_task():
     """在单独的事件循环中运行异步任务"""
-    asyncio.run(check_pending_payments())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(check_pending_payments())
+    except Exception as e:
+        logger.error(f"执行异步任务时出错: {e}")
+    finally:
+        loop.close()
 
 
 def start_check_balance_task():
@@ -48,41 +55,35 @@ def start_check_balance_task():
 
     scheduler = BackgroundScheduler()
 
-    scheduler.add_job(
-        func=run_async_task,  # 要执行的异步函数
-        # args=(),  # 异步函数的参数
-        trigger='cron',  # 触发器类型
-        day_of_week='mon-fri',  # 星期一到星期五
-        hour='9-18',  # 早上9点到晚上6点
-        minute='*/30',  # Every 30 minutes (equivalent to 1800 seconds)
-        start_date='2025-01-01 00:00:00',  # 任务开始时间
-        end_date='2025-12-31 23:59:59',  # 任务结束时间
-        misfire_grace_time=60,  # 如果错过了执行时间点，在60秒内仍然尝试执行
-        timezone=beijing_tz  # 时区
+    job1 = scheduler.add_job(
+        func=run_async_task,
+        trigger='cron',
+        day_of_week='mon-fri',
+        hour='9-18',
+        minute='*/30',
+        timezone=beijing_tz
     )
+    logger.info(f"添加Job1: 每30分钟触发, 下次运行时间: {job1.next_run_time}")
 
-    scheduler.add_job(
+    job2 = scheduler.add_job(
         func=run_async_task,
         trigger='cron',
         day_of_week='mon-fri',
         hour='12',
         minute='49',
-        start_date='2025-01-01 00:00:00',
-        end_date='2025-12-31 23:59:59',
-        misfire_grace_time=60,  # 如果错过了执行时间点，在60秒内仍然尝试执行
-        timezone=beijing_tz  # 时区
+        timezone=beijing_tz
     )
-    scheduler.add_job(
+    logger.info(f"添加Job2: 12:49触发, 下次运行时间: {job2.next_run_time}")
+
+    job3 = scheduler.add_job(
         func=run_async_task,
         trigger='cron',
         day_of_week='mon-fri',
         hour='12',
         minute='50',
-        start_date='2025-01-01 00:00:00',
-        end_date='2025-12-31 23:59:59',
-        misfire_grace_time=60,  # 如果错过了执行时间点，在60秒内仍然尝试执行
-        timezone=beijing_tz  # 时区
+        timezone=beijing_tz
     )
+    logger.info(f"添加Job3: 12:50触发, 下次运行时间: {job3.next_run_time}")
 
     scheduler.start()
     logger.info("定时任务调度器已启动")
