@@ -166,7 +166,7 @@ def start_check_balance_task():
     # 获取配置中的时间间隔，默认为39分钟
     interval_minutes = public_config.get(key="task.interval", get_type=int, default=39)
 
-    # 创建组合触发器：周一到周五 + 9:00-20:00 + 间隔极速
+    # 创建组合触发器：周一到周五 + 9:00-20:00 + 间隔
     job1_trigger = AndTrigger([
         CronTrigger(day_of_week='mon-fri', hour='9-20'),
         IntervalTrigger(minutes=interval_minutes)
@@ -187,13 +187,13 @@ def start_check_balance_task():
         day_of_week='mon-fri',
         hour='12',
         minute='49',
-        start_date='极速-01-01 00:00:00',
+        start_date='2025-01-01 00:00:00',  # 修复无效日期字符串
         end_date='2025-12-31 23:59:59',
         id='lunch_reminder_job_49'
     )
     logger.info(f"添加Job2: 周一到周五 12:49触发")
 
-    job3 = scheduler.add极速(
+    job3 = scheduler.add_job(  # 修复方法名错误
         func=run_async_have_lunch_task,
         trigger='cron',
         day_of_week='mon-fri',
@@ -213,7 +213,6 @@ def start_check_balance_task():
         id='daily_reminder_job'
     )
     logger.info(f"添加Job4: 每天 11:05触发")
-
 
     try:
         scheduler.start()
@@ -252,7 +251,7 @@ def stop_periodic_task():
             scheduler = None
         if push_msg_thread:
             push_msg_thread = None
-        logger.info("定时极速调度器已停止")
+        logger.info("定时任务调度器已停止")
 
         # 确保Telegram已启用
         if public_config and public_config.get(key='telegram.enable', get_type=bool):
