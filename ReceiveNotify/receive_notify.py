@@ -24,12 +24,14 @@ from PeriodicTask.pay_notify import start_periodic_task, stop_periodic_task
 from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
 from DataBase.async_redis import redis_manager, get_redis
-from Logger.logger_config import setup_logger
+
 from Utils.handle_time import get_sec_int_timestamp
 
 # ----------------- 日志配置 -----------------
+from Logger.logger_config import setup_logger
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
+# -------------------------------------------
 
 # ----------------- HTTP 返回 -----------------
 success = Response(content="success", media_type="text/plain")

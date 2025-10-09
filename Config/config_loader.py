@@ -162,7 +162,8 @@ def initialize_config():
                     ['app_name', '应用名称', 'FastAPI Receive Pay Notify Service'],
                     ['version', '版本号', '1.0.00'],
                     ['debug', '调试模式', False],
-                    ['python_version', 'Python版本', '3.10.12']
+                    ['python_version', 'Python版本', '3.10.12'],
+                    ['timezone', '本系统默认时区', 'Asia/Shanghai']
                 ]
             ],
 
