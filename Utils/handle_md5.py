@@ -16,7 +16,6 @@ def get_uuid():
     return os.urandom(16).hex()
 
 
-
 def get_str_md5(content):
     try:
         md5 = hashlib.md5(content.encode(encoding='utf-8'))  # 创建md5对象
@@ -213,20 +212,21 @@ def get_file_md5_str(file: str) -> str:
         return f"错误: 计算MD5时发生未知错误: {e}"
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+def verify_hash_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password: str) -> str:
+def get_hash_password(password: str) -> str:
     return pwd_context.hash(password)
+
 
 # 使用示例
 # file_path = "E:\\FastAPI\\fastapi.service"  # 替换为你的文件路径
 # md5_value = get_file_md5_str(file_path)
 # print(f"文件的 MD5 值为: {md5_value}")
 
-# print(get_password_hash("123456"))  # True
-# print(verify_password("123456", get_password_hash("123456")))  # True
+# print(get_hash_password("123456"))  # True
+# print(verify_hash_password("123456", get_hash_password("123456")))  # True
 
 
 def create_signature(data: dict, secret_key: str) -> str:

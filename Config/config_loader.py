@@ -235,7 +235,7 @@ def initialize_config():
             logger.info(f"开始初始化：{item[1]}[{item[0]}] ...")
             for sub_item in item[2]:
                 public_config.set(key=f'{item[0]}.{sub_item[0]}', value=sub_item[2])
-                if 'password' in sub_item[0]:
+                if 'password' in sub_item[0] or 'token' in sub_item[0]:
                     if sub_item[2] is None or sub_item[2] == '' or len(sub_item[2]) <= 0:
                         logger.info(f"设置配置：{sub_item[0]} = ****** [{sub_item[1]}]")
                     else:

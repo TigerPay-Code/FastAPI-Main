@@ -1,51 +1,41 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @Author    : 贺鉴龙
-# @File      : __init__.py
-# @Time      : 2025/9/15 17:47
+# @File      : receive_notify.py
+# @Time      : 2025/10/09
 # @IDE       : PyCharm
-# @Function  : 接收支付通知 （global_pay_in_notify 代收通知，global_pay_out_notify 代付通知，global_refund_notify 退款通知）
+# @Function  : 接收支付通知 + 启动异步调度任务 + Telegram 实时提醒
 
 import os
-import time
 import json
 from datetime import datetime
-
+from math import ceil
 from fastapi import FastAPI, Request, Response, Depends, Query
-
-from Config.config_loader import initialize_config, public_config
-from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
-
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-from math import ceil
-
-# 引用生命期管理器模块
 from contextlib import asynccontextmanager
-
-# 引用定时任务模块
-from PeriodicTask.pay_notify import start_periodic_task, stop_periodic_task
-
-# 引用发送Telegram消息模块
-from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
-
-# 引用数据库异步操作模块
-from DataBase.async_mysql import mysql_manager, get_mysql_conn
-from DataBase.async_redis import redis_manager, get_redis
-from Redis.redis_cache import get_cache, set_cache
 import aiomysql
 
-# 引用日志模块
+# ----------------- 模块导入 -----------------
+from Config.config_loader import initialize_config, public_config
+from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
+from PeriodicTask.pay_notify import start_periodic_task, stop_periodic_task
+from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
+from DataBase.async_mysql import mysql_manager, get_mysql_conn
+from DataBase.async_redis import redis_manager, get_redis
 from Logger.logger_config import setup_logger
 from Utils.handle_time import get_sec_int_timestamp
 
+# ----------------- 日志配置 -----------------
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
+# ----------------- HTTP 返回 -----------------
 success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
 
+# ----------------- MySQL 与 Redis 配置 -----------------
 mysql_cfg = {
     "host": public_config.get(key="database.host", get_type=str),
     "port": public_config.get(key="database.port", get_type=int),
@@ -54,76 +44,87 @@ mysql_cfg = {
     "db": public_config.get(key="database.database", get_type=str),
     "charset": public_config.get(key="database.charset", get_type=str)
 }
-redis_url = (f"redis://{public_config.get(key='redis.host', get_type=str)}:"
-             f"{public_config.get(key='redis.port', get_type=int)}/"
-             f"{public_config.get(key='redis.db', get_type=int)}")
 
+redis_url = (
+    f"redis://{public_config.get(key='redis.host', get_type=str)}:"
+    f"{public_config.get(key='redis.port', get_type=int)}/"
+    f"{public_config.get(key='redis.db', get_type=int)}"
+)
 redis_cfg = {
     "url": redis_url,
     "max_connections": 50,
 }
 
 
-# 应用生命周期事件
+# ============================================================
+# 应用生命周期管理
+# ============================================================
 @asynccontextmanager
 async def lifespan_manager(app: FastAPI):
-    logger.info("正在初始化配置文件...")
-    initialize_config()
+    """FastAPI 生命周期事件"""
+    try:
+        logger.info("🔧 正在初始化配置文件...")
+        initialize_config()
+        logger.info(f"当前操作系统: {public_config.get(key='software.system', get_type=str)}")
+        logger.info(f"服务名称: {app.openapi()['info']['title']}")
 
-    logger.info(f"当前操作系统：{public_config.get(key='software.system', get_type=str)}")
+        # 初始化数据库连接池
+        logger.info("🗄️ 启动 MySQL 连接池...")
+        await mysql_manager.init_pool(**mysql_cfg)
 
-    logger.info(f"服务名称：{app.openapi()['info']['title']}")
+        # 初始化 Redis 连接池
+        logger.info("🧠 启动 Redis 连接池...")
+        await redis_manager.init_pool(**redis_cfg)
 
-    logger.info(f"正在启动数据库连接池...")
-    await mysql_manager.init_pool(**mysql_cfg)
+        # 启动 Telegram 机器人
+        if public_config.get(key='telegram.enable', get_type=bool):
+            logger.info("🤖 启动 Telegram 机器人线程...")
+            start_bot()
+            await send_telegram_message("✅ Telegram 机器人已启动")
+        else:
+            logger.warning("⚠️ Telegram 功能未启用，请检查配置文件 telegram.enable")
 
-    logger.info(f"正在启动Redis连接池...")
-    await redis_manager.init_pool(**redis_cfg)
+        # 启动定时任务调度器（异步）
+        logger.info("⏱ 启动异步定时任务调度器...")
+        start_periodic_task()
 
-    # 启动 Telegram 机器人（如果启用）
-    if public_config and public_config.get(key='telegram.enable', get_type=bool):
-        logger.info("正在启动 Telegram 机器人...")
-        start_bot()
-        logger.info("Telegram 机器人线程已启动")
-    else:
-        logger.info("启动 Telegram 机器人 失败！ (请检查配置文件中 telegram.enable 是否为 True)")
+        # 服务启动通知
+        if public_config.get(key='telegram.enable', get_type=bool):
+            await send_telegram_message(f"🚀 服务 [{app.openapi()['info']['title']}] 已启动")
 
-    # 启动定时任务
-    logger.info("正在启动定时任务...")
-    start_periodic_task()
+        yield  # 👇 应用运行中
 
-    logger.info("接收Pay-RX通知服务开启")
-    if public_config and public_config.get(key='telegram.enable', get_type=bool):
-        await send_telegram_message(f"服务 {app.openapi()['info']['title']} 已启动")
+    except Exception as e:
+        logger.exception(f"❌ 服务启动过程中出错: {e}")
+        if public_config.get(key='telegram.enable', get_type=bool):
+            await send_telegram_message(f"❌ 服务启动出错: {e}")
 
-    # 应用生命周期结束时执行
-    yield
+    finally:
+        # 停止任务与清理
+        logger.info("🛑 服务关闭中... 停止调度任务与机器人")
 
-    logger.info("接收Pay-RX通知服务关闭")
-    if public_config and public_config.get(key='telegram.enable', get_type=bool):
-        await send_telegram_message(f"服务 {app.openapi()['info']['title']} 已关闭")
+        stop_periodic_task()
 
-    logger.info(f"正在关闭数据库连接池...")
-    await mysql_manager.close()
-    logger.info(f"正在关闭Redis连接池...")
-    await redis_manager.close()
+        if public_config.get(key='telegram.enable', get_type=bool):
+            await send_telegram_message(f"🧩 服务 [{app.openapi()['info']['title']}] 已关闭")
+            stop_bot()
 
-    # 停止 Telegram 机器人
-    stop_bot()
-
-    # 停止定时任务
-    logger.info("正在停止定时任务...")
-    stop_periodic_task()
+        await mysql_manager.close()
+        await redis_manager.close()
+        logger.info("✅ 所有资源已安全关闭")
 
 
+# ============================================================
+# FastAPI 应用实例
+# ============================================================
 notify = FastAPI(
     title=public_config.get(key='software.app_name', get_type=str),
-    description="接收Pay-RX通知服务",
+    description="接收 Pay-RX 支付回调通知服务",
     version=public_config.get(key='software.version', get_type=str),
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
-    lifespan=lifespan_manager
+    lifespan=lifespan_manager,
 )
 
 notify.mount("/static", StaticFiles(directory="static"), name="static")
@@ -131,13 +132,19 @@ templates = Jinja2Templates(directory="templates")
 notify.templates = templates
 
 
+# ============================================================
+# 工具函数
+# ============================================================
 def datetime_serializer(obj):
-    """自定义序列化函数，处理datetime对象"""
+    """datetime → str"""
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
+# ============================================================
+# 路由部分
+# ============================================================
 @notify.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("base.html", {"request": request})
@@ -151,33 +158,20 @@ async def get_users(
         conn=Depends(get_mysql_conn),
         redis=Depends(get_redis)
 ):
-    # 计算偏移量
     offset = (page - 1) * per_page
-
-    # 从缓存中获取数据
     cache_key = f"users_list:page_{page}:per_page_{per_page}"
+
     cached_data = await redis.get(cache_key)
-
-    users = None
-
     if cached_data:
-        # 如果缓存命中，则直接返回
         users = json.loads(cached_data)
-
-        # 即使缓存命中，也需要获取总记录数用于分页
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("SELECT COUNT(*) AS total FROM users")
-            total_result = await cur.fetchone()
-            total_users = total_result['total']
+            total_users = (await cur.fetchone())["total"]
     else:
-        # 如果缓存未命中，则从数据库中获取数据
         async with conn.cursor(aiomysql.DictCursor) as cur:
-            # 获取总记录数
             await cur.execute("SELECT COUNT(*) AS total FROM users")
-            total_result = await cur.fetchone()
-            total_users = total_result['total']
+            total_users = (await cur.fetchone())["total"]
 
-            # 获取当前页的用户数据
             await cur.execute(
                 "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
                 (per_page, offset)
@@ -186,10 +180,7 @@ async def get_users(
 
             await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
 
-    # 计算总页数
     total_pages = int(ceil(total_users / per_page))
-
-    # 分页信息
     pagination = {
         "page": page,
         "per_page": per_page,
@@ -198,159 +189,81 @@ async def get_users(
         "has_prev": page > 1,
         "has_next": page < total_pages,
         "prev_page": page - 1 if page > 1 else 1,
-        "next_page": page + 1 if page < total_pages else total_pages
+        "next_page": page + 1 if page < total_pages else total_pages,
     }
 
     return request.app.templates.TemplateResponse(
         "users.html",
-        {
-            "request": request,
-            "users": users,
-            "pagination": pagination
-        }
+        {"request": request, "users": users, "pagination": pagination}
     )
 
 
-# 查询数据 (查)
-@notify.get("/user/{user_id}")
-async def get_user_profile(user_id: int, conn=Depends(get_mysql_conn)):
-    start = time.perf_counter_ns()
-
-    cache_key = f"user:{user_id}"
-    cached_data = await get_cache(cache_key)
-    if cached_data:
-        end = time.perf_counter_ns()
-        elapsed_ms = (end - start) / 1_000_000
-        logger.info(f"缓存查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
-        return cached_data
-
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT id, username, email, balance FROM users WHERE id=%s", (user_id,))
-        user_data = await cur.fetchone()
-
-        if user_data:
-            # 将查询结果存入缓存，设置过期时间为600秒
-            await set_cache(cache_key, user_data,
-                            expire=public_config.get(key="redis.cache_expire", get_type=int, default=60))
-            end = time.perf_counter_ns()
-            elapsed_ms = (end - start) / 1_000_000
-            logger.info(f"数据库查询用户ID: {user_id} 耗时: {elapsed_ms:.6f} 毫秒")
-            return user_data
-
-    return None
-
-
-# 查询数据 (查)
-@notify.get("/username/{user_name}")
-async def get_user(user_name: str, conn=Depends(get_mysql_conn)):
-    start = time.perf_counter_ns()
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT id, username, email, balance FROM users WHERE username=%s", (user_name,))
-        row = await cur.fetchone()
-    end = time.perf_counter_ns()
-    elapsed_ms = (end - start) / 1_000_000
-    logger.info(f"查询用户名: {user_name} 耗时: {elapsed_ms:.6f} 毫秒")
-    return {"user": row, "query_time_ns": f"查询用户名: {user_name} 耗时: {elapsed_ms:.6f} 毫秒"}
-
-
-@notify.post("/transfer")
-async def transfer_money(conn=Depends(get_mysql_conn)):
-    """
-    模拟事务：从用户1扣钱，给用户2加钱
-    """
-    try:
-        async with conn.cursor() as cur:
-            await conn.begin()  # 开启事务
-
-            # 扣钱
-            await cur.execute(
-                "UPDATE accounts SET balance = balance - %s WHERE id=%s",
-                (100, 1),
-            )
-
-            # 加钱
-            await cur.execute(
-                "UPDATE accounts SET balance = balance + %s WHERE id=%s",
-                (100, 2),
-            )
-
-            await conn.commit()  # 提交事务
-        return {"msg": "transfer success"}
-    except Exception as e:
-        await conn.rollback()  # 回滚事务
-        return {"error": str(e)}
-
-
-@notify.get("/Pay-RX_Notify")  # 测试接口
-async def pay_rx_notify():
-    logger.info(f"健康检查，返回 health，服务运行正常")
-    return Response(content="health", media_type="text/plain")
-
-
+# ============================================================
+# 支付通知接口
+# ============================================================
 @notify.post("/global_pay_in_notify")
 async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
-    logger.info(f"收到 【代收】 通知：数据：{notify_in_data}")
-    re_data = {
-        "code": 0,
-        "msg": "success",
-    }
+    """代收通知"""
+    logger.info(f"收到【代收】通知: {notify_in_data}")
+    re_data = {"code": 0, "msg": "success"}
 
-    if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds", get_type=int, default=30):
-        logger.warning(f"订单号:  {notify_in_data.mchOrderNo} timestamp 时间戳异常，可能为重放攻击，拒绝处理")
-        re_data["code"] = 1
-        re_data["msg"] = "timestamp error"
+    try:
+        # 时间戳验证
+        if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds", get_type=int, default=30):
+            logger.warning(f"订单号 {notify_in_data.mchOrderNo} 时间戳异常，拒绝处理")
+            return {"code": 1, "msg": "timestamp error"}
+
+        if notify_in_data.state not in [0, 1, 2, 3]:
+            logger.warning(f"订单号 {notify_in_data.mchOrderNo} 状态异常")
+            return {"code": 1, "msg": "state error"}
+
+        if notify_in_data.amount < 500 or notify_in_data.amount > 1000000:
+            logger.warning(f"订单号 {notify_in_data.mchOrderNo} 金额异常")
+            return {"code": 1, "msg": "amount error"}
+
+        msg = (
+            f"💰 订单号 {notify_in_data.mchOrderNo} "
+            f"{'支付成功' if notify_in_data.state == 2 else '支付失败'}，"
+            f"金额：{notify_in_data.amount / 100:.2f} 元"
+        )
+        logger.info(msg)
+        await send_telegram_message(msg)
         return re_data
 
-    if notify_in_data.state not in [0, 1, 2, 3]:
-        logger.warning(f"订单号:  {notify_in_data.mchOrderNo} state 状态异常，可能为重放攻击，拒绝处理")
-        re_data["code"] = 1
-        re_data["msg"] = "state error"
-        return re_data
-
-    if notify_in_data.amount < 500 or notify_in_data.amount > 1000000:
-        logger.warning(f"订单号:  {notify_in_data.mchOrderNo} amount 金额异常，可能为重放攻击，拒绝处理")
-        re_data["code"] = 1
-        re_data["msg"] = "amount error"
-        return re_data
-
-    if notify_in_data.state == 2:
-        logger.info(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100:.2f}元")
-        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 已成功支付，金额: {notify_in_data.amount/100:.2f}元")
-    else:
-        logger.error(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100:.2f}元")
-        await send_telegram_message(f"订单号: {notify_in_data.mchOrderNo} 支付失败，金额: {notify_in_data.amount/100:.2f}元")
-    return re_data
+    except Exception as e:
+        logger.exception(f"处理代收通知出错: {e}")
+        await send_telegram_message(f"❌ 处理代收通知出错: {e}")
+        return {"code": 1, "msg": "internal error"}
 
 
 @notify.post("/global_pay_out_notify")
 async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
-    logger.info(f"收到 【代付】 通知：数据：{notify_out_data}")
-    re_data = {
-        "code": 0,
-        "msg": "success",
-    }
-    if notify_out_data.state == 2:
-        logger.info(f"代付订单号: {notify_out_data.mchOrderNo} 已成功代付，金额: {notify_out_data.amount/100:.2f}元")
-        await send_telegram_message(f"订单号: {notify_out_data.mchOrderNo} 已成功代付，金额: {notify_out_data.amount/100:.2f}元")
-    else:
-        logger.error(f"代付订单号: {notify_out_data.mchOrderNo} 代付失败，金额: {notify_out_data.amount/100:.2f}元")
-        await send_telegram_message(f"订单号: {notify_out_data.mchOrderNo} 代付失败，金额: {notify_out_data.amount/100:.2f}元")
-    return re_data
+    """代付通知"""
+    logger.info(f"收到【代付】通知: {notify_out_data}")
+    msg = (
+        f"🏦 代付订单号 {notify_out_data.mchOrderNo} "
+        f"{'代付成功' if notify_out_data.state == 2 else '代付失败'}，"
+        f"金额：{notify_out_data.amount / 100:.2f} 元"
+    )
+    await send_telegram_message(msg)
+    return {"code": 0, "msg": "success"}
 
 
 @notify.post("/global_refund_notify")
 async def handle_global_refund_notify(notify_refund_data: Pay_RX_Notify_Refund_Data):
-    logger.info(f"收到 【退款】 通知：数据：{notify_refund_data}")
-    re_data = {
-        "code": 0,
-        "msg": "success",
-    }
-    if notify_refund_data.state == 2:
-        logger.info(f"退款订单号: {notify_refund_data.mchOrderNo} 已成功退款，金额: {notify_refund_data.amount/100:.2f}元")
-        await send_telegram_message(
-            f"退款订单号: {notify_refund_data.mchOrderNo} 已成功退款，金额: {notify_refund_data.amount/100:.2f}元")
-    else:
-        logger.error(f"退款订单号: {notify_refund_data.mchOrderNo} 退款失败，金额: {notify_refund_data.amount/100:.2f}元")
-        await send_telegram_message(
-            f"退款订单号: {notify_refund_data.mchOrderNo} 退款失败，金额: {notify_refund_data.amount/100:.2f}元")
-    return re_data
+    """退款通知"""
+    logger.info(f"收到【退款】通知: {notify_refund_data}")
+    msg = (
+        f"🔁 退款订单号 {notify_refund_data.mchOrderNo} "
+        f"{'退款成功' if notify_refund_data.state == 2 else '退款失败'}，"
+        f"金额：{notify_refund_data.amount / 100:.2f} 元"
+    )
+    await send_telegram_message(msg)
+    return {"code": 0, "msg": "success"}
+
+
+@notify.get("/Pay-RX_Notify")
+async def pay_rx_health():
+    """健康检查"""
+    logger.info("健康检查成功")
+    return Response(content="health", media_type="text/plain")
