@@ -111,13 +111,14 @@ def start_check_balance_task():
         id="check_job",
         name="定时检查未处理支付任务",
         func=run_all_tasks,
-        args=['check_job','定时检查未处理支付任务','每隔半小时检查一次未处理支付任务'],
-        trigger='cron',
-        hour='9-20',  # 仅在工作时间执行
+        args=['check_job', '定时检查未处理支付任务', '每隔半小时检查一次未处理支付任务'],
+        trigger='cron',  # 改为 cron 触发器
+        hour='9-20',  # 9点到20点
         day_of_week='mon-fri',  # 周一至周五
-        minutes='*/30',  # 每半小时执行一次
-        start_date='2024-01-01 09:00:00',  # 开始时间
-        end_date='2025-12-31 23:59:59'  # 结束时间
+        minute='*/30',  # 每30分钟执行一次
+        start_date='2024-01-01 09:00:00',
+        end_date='2025-12-31 23:59:59',
+        timezone='Asia/Shanghai'  # 强烈建议添加时区
     )
 
     # ===============================
