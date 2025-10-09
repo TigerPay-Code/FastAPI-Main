@@ -83,12 +83,15 @@ def is_working_hours() -> bool:
     return time(9, 0) <= now.time() <= time(20, 0)
 
 
-async def check_pending_payments_wrapper():
+async def check_pending_payments_wrapper(task_id: str, task_name: str, message: str):
     """包装器：仅在工作时间执行检查"""
+
+    logger.info(f"收到参数: {task_id}, {task_name}, {message}")
+
     if is_working_hours():
         await check_pending_payments()
     else:
-        logger.info("⏸ 当前非工作时间，跳过支付检查任务")
+        logger.info("当前非工作时间，跳过支付检查任务")
 
 
 # ============================================================
@@ -107,11 +110,12 @@ def start_check_balance_task():
     interval_seconds = public_config.get(key="task.interval", get_type=int, default=1800)
     scheduler.add_job(
         func=check_pending_payments_wrapper,
+        args=['定时检查未处理支付任务','定时检查未处理支付任务','每隔半小时检查一次未处理支付任务'],
         trigger=IntervalTrigger(seconds=interval_seconds),
         id="payment_check_job",
         name="定时检查未处理支付任务",
-        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
-        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
+        start_date='2024-01-01 09:00:00',  # 开始时间
+        end_date='2025-12-31 23:59:59'  # 结束时间
     )
     logger.info(f"添加 Job1：每 {interval_seconds} 秒执行一次（仅限工作时间）")
 
@@ -123,8 +127,8 @@ def start_check_balance_task():
         trigger=CronTrigger(day_of_week="mon-fri", hour=12, minute=49),
         id="lunch_reminder_1249",
         name="午饭提醒 12:49",
-        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
-        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
+        start_date=datetime(2025, 1, 1, 0, 0, 0),  # 开始时间
+        end_date=datetime(2025, 12, 31, 23, 59, 59)  # 结束时间
     )
 
     # ===============================
@@ -135,8 +139,8 @@ def start_check_balance_task():
         trigger=CronTrigger(day_of_week="mon-fri", hour=12, minute=50),
         id="lunch_reminder_1250",
         name="午饭提醒 12:50",
-        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
-        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
+        start_date=datetime(2025, 1, 1, 0, 0, 0),  # 开始时间
+        end_date=datetime(2025, 12, 31, 23, 59, 59)  # 结束时间
     )
 
     # ===============================
@@ -147,8 +151,8 @@ def start_check_balance_task():
         trigger=CronTrigger(hour=11, minute=5),
         id="daily_reminder_1105",
         name="每日支付报表提醒",
-        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
-        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
+        start_date=datetime(2025, 1, 1, 0, 0, 0),  # 开始时间
+        end_date=datetime(2025, 12, 31, 23, 59, 59)  # 结束时间
     )
 
     # ===============================

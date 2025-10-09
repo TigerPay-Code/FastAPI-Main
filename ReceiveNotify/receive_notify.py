@@ -19,16 +19,27 @@ import aiomysql
 
 # ----------------- 模块导入 -----------------
 from Config.config_loader import initialize_config, public_config
+
+# ----------------- 数据模型导入 -----------------
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 
 # ----------------- FastAPI中间访问件模块导入 -----------------
 # from MiddleWare.middleware import AccessMiddleware
 # -------------------------------------------
+
+# ----------------- 定时任务模块导入 -----------------
 from PeriodicTask.pay_notify import start_periodic_task, stop_periodic_task
+
+# ----------------- Telegram 机器人模块导入 -----------------
 from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
+
+# ----------------- 数据库连接池模块导入 -----------------
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
+
+# ----------------- Redis 连接池模块导入 -----------------
 from DataBase.async_redis import redis_manager, get_redis
 
+# ----------------- 工具模块导入 -----------------
 from Utils.handle_time import get_sec_int_timestamp
 
 # ----------------- 日志配置 -----------------
@@ -37,11 +48,11 @@ log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 # -------------------------------------------
 
-# ----------------- HTTP 返回 -----------------
+# ----------------- HTTP 返回纯文本 -----------------
 success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
 
-# ----------------- MySQL 与 Redis 配置 -----------------
+# ----------------- MySQL 配置 -----------------
 mysql_cfg = {
     "host": public_config.get(key="database.host", get_type=str),
     "port": public_config.get(key="database.port", get_type=int),
@@ -50,7 +61,7 @@ mysql_cfg = {
     "db": public_config.get(key="database.database", get_type=str),
     "charset": public_config.get(key="database.charset", get_type=str)
 }
-
+# ----------------- Redis 配置 -----------------
 redis_url = (
     f"redis://{public_config.get(key='redis.host', get_type=str)}:"
     f"{public_config.get(key='redis.port', get_type=int)}/"
@@ -109,13 +120,18 @@ async def lifespan_manager(app: FastAPI):
         # 停止任务与清理
         logger.info("🛑 服务关闭中... 停止调度任务与机器人")
 
+        # 停止定时任务调度器
         stop_periodic_task()
 
+        # 停止 Telegram 机器人线程
         if public_config.get(key='telegram.enable', get_type=bool):
             await send_telegram_message(f"🧩 服务 [{app.openapi()['info']['title']}] 已关闭")
             stop_bot()
 
+        # 关闭数据库连接池与 Redis 连接池
         await mysql_manager.close()
+
+        # 关闭 Redis 连接池
         await redis_manager.close()
         logger.info("✅ 所有资源已安全关闭")
 
@@ -133,10 +149,12 @@ notify = FastAPI(
     lifespan=lifespan_manager,
 )
 
+# 静态文件与模板配置
 notify.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 notify.templates = templates
 
+# 添加中间件（如有需要）
 # notify.add_middleware(
 #     AccessMiddleware,
 #     allow_origins=["*"],
@@ -158,11 +176,13 @@ def datetime_serializer(obj):
 # ============================================================
 # 路由部分
 # ============================================================
+# 首页路由
 @notify.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("base.html", {"request": request})
 
 
+# 用户列表路由（分页 + 缓存）
 @notify.get("/users", response_class=HTMLResponse)
 async def get_users(
         request: Request,
@@ -214,6 +234,7 @@ async def get_users(
 # ============================================================
 # 支付通知接口
 # ============================================================
+# 代收通知接口
 @notify.post("/global_pay_in_notify")
 async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
     """代收通知"""
@@ -249,6 +270,7 @@ async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
         return {"code": 1, "msg": "internal error"}
 
 
+# 代付通知接口
 @notify.post("/global_pay_out_notify")
 async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
     """代付通知"""
@@ -262,6 +284,7 @@ async def handle_global_pay_out_notify(notify_out_data: Pay_RX_Notify_Out_Data):
     return {"code": 0, "msg": "success"}
 
 
+# 退款通知接口
 @notify.post("/global_refund_notify")
 async def handle_global_refund_notify(notify_refund_data: Pay_RX_Notify_Refund_Data):
     """退款通知"""
@@ -275,6 +298,7 @@ async def handle_global_refund_notify(notify_refund_data: Pay_RX_Notify_Refund_D
     return {"code": 0, "msg": "success"}
 
 
+# 健康检查接口
 @notify.get("/Pay-RX_Notify")
 async def pay_rx_health():
     """健康检查"""

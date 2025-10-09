@@ -4,9 +4,9 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import time
 import json
-from DataBase.async_mysql import mysql_manager
-
 from Logger.logger_config import setup_logger
+
+
 import os
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
@@ -64,11 +64,54 @@ def get_real_ip(request):
 
 
 class AccessMiddleware(BaseHTTPMiddleware):
-    """全局访问中间件"""
+    """
+        支持 Redis 黑名单 + MySQL 封禁日志 + Telegram 告警 的安全中间件
+        ---------------------------------------------------------------
+        功能：
+        1. 实时检测 IP 访问频率
+        2. 达阈值自动封禁并记录日志
+        3. Redis 黑名单自动过期解封
+        4. Telegram 推送封禁告警
+        5. MySQL 安全审计记录
+    """
+    def __init__(
+        self,
+        app: ASGIApp,
+        db_pool: Pool,                # ✅ MySQL 异步连接池
+        allow_origins=None,
+        allow_credentials=True,
+        allow_methods=None,
+        allow_headers=None,
+        blacklist_key="blacklist:ip",
+        rate_key_prefix="reqcount:",
+        threshold=100,      # 阈值：在 time_window 秒内允许的最大请求数
+        time_window=60,     # 统计窗口时间
+        ban_time=600,       # 封禁时长
+        telegram_token=None,
+        admin_chat_id=None,
+        service_name="FastAPI Service",
+    ):
+        super().__init__(app)
+        self.db_pool = db_pool
+        self.allow_origins = allow_origins or ["*"]
+        self.allow_credentials = allow_credentials
+        self.allow_methods = allow_methods or ["*"]
+        self.allow_headers = allow_headers or ["*"]
 
-    def __init__(self) -> None:
-        self.pool: Optional[MySQLPool] = None
+        # Redis 键配置
+        self.blacklist_key = blacklist_key
+        self.rate_key_prefix = rate_key_prefix
 
+        # 安全策略
+        self.threshold = threshold
+        self.time_window = time_window
+        self.ban_time = ban_time
+
+        # Telegram 告警
+        self.telegram_token = telegram_token
+        self.admin_chat_id = admin_chat_id
+        self.service_name = service_name
+        self.bot = Bot(token=self.telegram_token) if telegram_token and admin_chat_id else None
     async def load_blacklist(self):
         now = time.time()
         if now - self.last_refresh > self.refresh_interval:

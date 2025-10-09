@@ -217,7 +217,80 @@ def initialize_config():
             [
                 'task', '自动任务配置',
                 [
-                    ['interval', '任务间隔时间 (秒)', 1800]
+                    ['interval', '检查未处理支付通知的时间间隔（秒）', 1800],
+
+
+                    ['job1.enable', '定时任务开关', True],
+                    ['job1.name', '定时任务名称', '工作日早上九点开始晚上8点结束，每隔半小时检查一次未处理支付通知'],
+                    ['job1.trigger', '定时任务触发器', 'interval'],  # interval, cron, date
+
+                    ['job1.year', '间隔年份', 1],
+                    ['job1.month', '间隔月份', 1],
+                    ['job1.weeks', '间隔周数', 1],
+                    ['job1.days', '间隔天数', 1],
+                    ['job1.hours', '间隔小时数', 1],
+                    ['job1.minutes', '间隔分钟数', 30],
+                    ['job1.seconds', '间隔秒数', 0],
+
+                    ['job1.start_date', '定时任务开始时间', '2024-01-01 09:00:00'],
+                    ['job1.end_date', '定时任务结束时间', '2030-12-31 23:59:59'],
+
+                    ['job1.timezone', '定时任务时区', 'Asia/Shanghai'],
+
+                    # day_of_week 完整名称：sunday, monday, tuesday, wednesday, thursday, friday, saturday
+                    # day_of_week 简写名称：sun, mon, tue, wed, thu, fri, sat
+                    # 每周一执行
+                    # day_of_week = 'mon'
+
+                    # 每周三和周五执行
+                    # day_of_week = 'wed,fri'
+
+                    # 工作日内执行（周一至周五）
+                    # day_of_week = 'mon-fri'
+
+                    # 周末执行（周六和周日）
+                    # day_of_week = 'sat,sun'
+
+                    # 工作日+周六（周一至周六）
+                    # day_of_week = 'mon-sat'
+
+                    # 特定组合：周一、周三、周五、周日
+                    # day_of_week = 'mon,wed,fri,sun'
+
+                    # 每隔一天执行（周一、周三、周五、周日）
+                    # day_of_week = '*/2'  # 等价于 0,2,4,6
+
+                    # 每三天执行一次（周一、周四）
+                    # day_of_week = '*/3'  # 等价于 0,3,6
+
+                    # 每月第一个周一
+                    # day_of_week = 'mon#1'
+
+                    # 每月最后一个周五
+                    # day_of_week = 'fri#last'  # 或 'fri#-1'
+
+                    # 所有工作日（周一至周五）
+                    # day_of_week = 'mon-fri'  # 或 '1-5'
+
+                    # 所有周末（周六至周日）
+                    # day_of_week = 'sat-sun'  # 或 '6-7' 或 'weekend'
+
+                    # 每周的每天
+                    # day_of_week = '*' 或者忽略掉这个参数
+
+                    ['job1.day_of_week', '定时任务星期几执行', 'mon-fri'],
+                    ['job1.month', '定时任务月份', '*'],
+                    ['job1.day', '定时任务日期', '*'],
+                    ['job1.func', '定时任务函数', 'app.tasks.check_unprocessed_payment_notify'],
+                    ['job1.args', '定时任务参数', ''],
+                    ['job1.kwargs', '定时任务关键字参数', ''],
+                    ['job1.trigger', '定时任务触发器', 'cron'],
+                    ['job1.timezone', '定时任务时区', 'Asia/Shanghai'],
+                    ['job1.misfire_grace_time', '定时任务容错时间', 300],
+                    ['job1.coalesce', '定时任务合并任务', True],
+                    ['job1.max_instances', '定时任务最大实例数', 1],
+                    ['job1.replace_existing', '定时任务替换已存在任务', True]
+
                 ]
             ],
 
