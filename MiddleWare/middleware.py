@@ -68,25 +68,29 @@ def get_real_ip(request):
 class AccessMiddleware(BaseHTTPMiddleware):
     """全局访问中间件"""
 
-    def __init__(self, app, api_token: str, blacklist_ip=None):
-        super().__init__(app)
-        self.api_token = api_token
-        self.blacklist_ip = blacklist_ip or []
+    def __init__(self) -> None:
+        self.pool: Optional[MySQLPool] = None
 
     async def load_blacklist(self):
-        """从 MySQL 加载启用状态的黑名单"""
         now = time.time()
         if now - self.last_refresh > self.refresh_interval:
-            conn = await mysql_manager.acquire()
-            try:
-                async with conn.cursor(aiomysql.DictCursor) as cur:
-                    await cur.execute("SELECT ip FROM ip_blacklist WHERE status=1")
-                    rows = await cur.fetchall()
-                    self.blacklist = {r["ip"] for r in rows}
+            # 优先从 Redis 获取（如果存在）
+            redis = ASYNC_DB.redis
+            cache_key = "ip_blacklist:enabled"
+            cached = await redis.get(cache_key)
+            if cached:
+                try:
+                    self.blacklist = set(json.loads(cached))
                     self.last_refresh = now
-                    print(f"✅ 黑名单已同步，共 {len(self.blacklist)} 条")
-            finally:
-                await mysql_manager.release(conn)
+                    return
+                except Exception:
+                    pass
+            # 回退：从 MySQL 查询
+            rows = await ASYNC_DB.mysql.fetchall("SELECT ip FROM ip_blacklist WHERE status=1")
+            self.blacklist = {r["ip"] for r in rows}
+            # 写入 Redis 缓存
+            await redis.set(cache_key, list(self.blacklist), ex=60)
+            self.last_refresh = now
 
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()  # 记录请求开始时间

@@ -9,6 +9,7 @@ ReceiveNotify/抗压测试/
 venv/
 test/
 SQL/
+logs/
 .vscode/
 #Cache folder
 .alcache/
