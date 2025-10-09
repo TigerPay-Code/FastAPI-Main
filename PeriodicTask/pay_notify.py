@@ -112,7 +112,7 @@ def start_check_balance_task():
         name="定时检查未处理支付任务",
         func=run_all_tasks,
         args=['check_job','定时检查未处理支付任务','每隔半小时检查一次未处理支付任务'],
-        trigger='interval',
+        trigger='cron',
         hour='9-20',  # 仅在工作时间执行
         day_of_week='mon-fri',  # 周一至周五
         minutes='*/30',  # 每半小时执行一次
