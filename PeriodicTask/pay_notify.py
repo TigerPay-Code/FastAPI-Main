@@ -167,7 +167,7 @@ def start_check_balance_task():
     if public_config.get(key="telegram.enable", get_type=bool):
         asyncio.create_task(send_telegram_message(
             f"✅ 定时任务调度器已启动，共配置 {len(scheduler.get_jobs())} 个任务\n"
-            f"支付检查任务：每 {interval_seconds} 秒执行一次（仅限工作时间）\n"
+            f"支付检查任务：每 30 分钟执行一次（仅限工作时间）\n"
             f"每日提醒时间：每天 11:05\n"
             f"午餐提醒：周一至周五 12:49 与 12:50"
         ))
