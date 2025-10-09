@@ -8,6 +8,8 @@
 import aioredis
 from redis.asyncio import Redis
 
+from Config.config_loader import public_config
+
 
 class RedisPoolManager:
     def __init__(self) -> None:
@@ -44,6 +46,17 @@ class RedisPoolManager:
 
 
 redis_manager = RedisPoolManager()
+
+# ----------------- Redis 连接池配置 -----------------
+redis_cfg = {
+    "host": public_config.get(key="redis.host", get_type=str),
+    "port": public_config.get(key="redis.port", get_type=int),
+    "password": public_config.get(key="redis.password", get_type=str),
+    "db": public_config.get(key="redis.database", get_type=int),
+}
+
+redis_manager.init_pool(**redis_cfg)
+# ----------------- Redis 连接池配置 -----------------
 
 
 # FastAPI 依赖

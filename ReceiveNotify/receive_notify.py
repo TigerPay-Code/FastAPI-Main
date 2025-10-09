@@ -20,6 +20,10 @@ import aiomysql
 # ----------------- 模块导入 -----------------
 from Config.config_loader import initialize_config, public_config
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
+
+# ----------------- 模块导入 -----------------
+from MiddleWare.middleware import AccessMiddleware
+# -------------------------------------------
 from PeriodicTask.pay_notify import start_periodic_task, stop_periodic_task
 from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
 from DataBase.async_mysql import mysql_manager, get_mysql_conn
@@ -133,6 +137,13 @@ notify.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 notify.templates = templates
 
+# notify.add_middleware(
+#     AccessMiddleware,
+#     allow_origins=["*"],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # ============================================================
 # 工具函数

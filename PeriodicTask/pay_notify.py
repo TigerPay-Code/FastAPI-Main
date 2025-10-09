@@ -109,7 +109,9 @@ def start_check_balance_task():
         func=check_pending_payments_wrapper,
         trigger=IntervalTrigger(seconds=interval_seconds),
         id="payment_check_job",
-        name="定时检查未处理支付任务"
+        name="定时检查未处理支付任务",
+        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
+        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
     )
     logger.info(f"添加 Job1：每 {interval_seconds} 秒执行一次（仅限工作时间）")
 
@@ -120,7 +122,9 @@ def start_check_balance_task():
         func=have_lunch,
         trigger=CronTrigger(day_of_week="mon-fri", hour=12, minute=49),
         id="lunch_reminder_1249",
-        name="午饭提醒 12:49"
+        name="午饭提醒 12:49",
+        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
+        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
     )
 
     # ===============================
@@ -130,7 +134,9 @@ def start_check_balance_task():
         func=have_lunch,
         trigger=CronTrigger(day_of_week="mon-fri", hour=12, minute=50),
         id="lunch_reminder_1250",
-        name="午饭提醒 12:50"
+        name="午饭提醒 12:50",
+        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
+        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
     )
 
     # ===============================
@@ -140,7 +146,9 @@ def start_check_balance_task():
         func=daily_reminder,
         trigger=CronTrigger(hour=11, minute=5),
         id="daily_reminder_1105",
-        name="每日支付报表提醒"
+        name="每日支付报表提醒",
+        start_date=datetime(2025, 1, 1, 0, 0, 0),  # ✅ 开始时间
+        end_date=datetime(2025, 12, 31, 23, 59, 59)  # ✅ 结束时间
     )
 
     # ===============================
