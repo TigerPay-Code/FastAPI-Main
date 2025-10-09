@@ -21,8 +21,8 @@ import aiomysql
 from Config.config_loader import initialize_config, public_config
 from Data.base import Pay_RX_Notify_In_Data, Pay_RX_Notify_Out_Data, Pay_RX_Notify_Refund_Data
 
-# ----------------- 模块导入 -----------------
-from MiddleWare.middleware import AccessMiddleware
+# ----------------- FastAPI中间访问件模块导入 -----------------
+# from MiddleWare.middleware import AccessMiddleware
 # -------------------------------------------
 from PeriodicTask.pay_notify import start_periodic_task, stop_periodic_task
 from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
