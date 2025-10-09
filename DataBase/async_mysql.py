@@ -63,18 +63,18 @@ class MySQLPoolManager:
 
 mysql_manager = MySQLPoolManager()
 
-# ----------------- MySQL 连接池配置 -----------------
-mysql_cfg = {
-    "host": public_config.get(key="database.host", get_type=str),
-    "port": public_config.get(key="database.port", get_type=int),
-    "user": public_config.get(key="database.user", get_type=str),
-    "password": public_config.get(key="database.password", get_type=str),
-    "db": public_config.get(key="database.database", get_type=str),
-    "charset": public_config.get(key="database.charset", get_type=str)
-}
-
-mysql_manager.init_pool(**mysql_cfg)
-
+# # ----------------- MySQL 连接池配置 -----------------
+# mysql_cfg = {
+#     "host": public_config.get(key="database.host", get_type=str),
+#     "port": public_config.get(key="database.port", get_type=int),
+#     "user": public_config.get(key="database.user", get_type=str),
+#     "password": public_config.get(key="database.password", get_type=str),
+#     "db": public_config.get(key="database.database", get_type=str),
+#     "charset": public_config.get(key="database.charset", get_type=str)
+# }
+# 
+# mysql_manager.init_pool(**mysql_cfg)
+# # ----------------- ----- ---------------------------
 
 # FastAPI 依赖
 async def get_mysql_conn():
