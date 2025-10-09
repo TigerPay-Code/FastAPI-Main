@@ -1,6 +1,4 @@
-import os
-
-import aiomysql
+# -*- coding: utf-8 -*-
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -9,7 +7,7 @@ import json
 from DataBase.async_mysql import mysql_manager
 
 from Logger.logger_config import setup_logger
-
+import os
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
