@@ -83,7 +83,7 @@ def is_working_hours() -> bool:
     return time(9, 0) <= now.time() <= time(20, 0)
 
 
-async def check_pending_payments_wrapper(task_id: str, task_name: str, message: str):
+async def run_all_tasks(task_id: str, task_name: str, message: str):
     """包装器：仅在工作时间执行检查"""
 
     logger.info(f"收到参数: {task_id}, {task_name}, {message}")
@@ -105,19 +105,20 @@ def start_check_balance_task():
     scheduler = AsyncIOScheduler()
 
     # ===============================
-    # Job1: 支付检查（每 task.interval 秒）
+    # Job1: 支付检查
     # ===============================
-    interval_seconds = public_config.get(key="task.interval", get_type=int, default=1800)
     scheduler.add_job(
-        func=check_pending_payments_wrapper,
-        args=['定时检查未处理支付任务','定时检查未处理支付任务','每隔半小时检查一次未处理支付任务'],
-        trigger=IntervalTrigger(seconds=interval_seconds),
-        id="payment_check_job",
+        id="check_job",
         name="定时检查未处理支付任务",
+        func=run_all_tasks,
+        args=['check_job','定时检查未处理支付任务','每隔半小时检查一次未处理支付任务'],
+        trigger='interval',
+        hour='9-20',  # 仅在工作时间执行
+        day_of_week='mon-fri',  # 周一至周五
+        minutes='*/30',  # 每半小时执行一次
         start_date='2024-01-01 09:00:00',  # 开始时间
         end_date='2025-12-31 23:59:59'  # 结束时间
     )
-    logger.info(f"添加 Job1：每 {interval_seconds} 秒执行一次（仅限工作时间）")
 
     # ===============================
     # Job2: 午饭提醒（12:49）
