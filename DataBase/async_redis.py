@@ -56,7 +56,7 @@ redis_manager = RedisPoolManager()
 # }
 #
 # redis_manager.init_pool(**redis_cfg)
-# # ----------------- Redis 连接池配置 -----------------
+# # ---------------------------------------------------
 
 
 # FastAPI 依赖
