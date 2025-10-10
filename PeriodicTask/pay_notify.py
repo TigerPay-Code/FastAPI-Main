@@ -116,9 +116,9 @@ def start_check_balance_task():
         hour='9-20',  # 9点到20点
         day_of_week='mon-fri',  # 周一至周五
         minute='*/30',  # 每30分钟执行一次
-        start_date='2024-01-01 09:00:00',
-        end_date='2025-12-31 23:59:59',
-        timezone='Asia/Shanghai'  # 强烈建议添加时区
+        start_date='2024-01-01 00:00:00', # 开始时间
+        end_date='2025-12-31 23:59:59', # 结束时间
+        timezone='Asia/Shanghai'  # 时区
     )
 
     # ===============================
