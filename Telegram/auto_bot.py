@@ -208,7 +208,7 @@ async def send_telegram_message(message: str):
                 logger.info(f"未命中缓存: {cache_key}，从数据库查询")
                 admin_chat_ids = await mysql_manager.fetchall(
                     "SELECT `chat_id` FROM `telegram_users` WHERE `status` = 1 AND `is_admin` = 1 ORDER BY `chat_id`")
-                await redis_manager.set(cache_key, json.dumps(admin_chat_ids), ex=600)
+                await redis_manager.set(cache_key, json.dumps(admin_chat_ids), ex=6000)
 
             for chat_id in admin_chat_ids:
                 try:

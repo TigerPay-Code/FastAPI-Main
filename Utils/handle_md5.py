@@ -1,8 +1,9 @@
+import datetime
 import hashlib
 import os
+import time
 from typing import Dict, Any
 from fastapi import Response
-import bcrypt
 
 from passlib.context import CryptContext  # pip install bcrypt==4.0.1
 
@@ -267,6 +268,28 @@ def create_signature(data: dict, secret_key: str) -> str:
     # 返回小写十六进制字符串
     return sha256.hexdigest()
 
+
+def get_str_current_time_number(test=False):
+    try:
+        now_time = datetime.datetime.now()
+        temp_str = (str(now_time.year).rjust(4, "0") +
+                    str(now_time.month).rjust(2, "0") +
+                    str(now_time.day).rjust(2, "0") +
+                    str(now_time.hour).rjust(2, "0") +
+                    str(now_time.minute).rjust(2, "0") +
+                    str(now_time.second).rjust(2, "0") +
+                    str(now_time.microsecond).zfill(6))
+
+        if test:
+            return "Test-" + temp_str
+        else:
+            return temp_str
+    except Exception as err:
+        print(f"获取当前时间字符串失败: {err}")
+        return None
+
+print(get_hash_password('helong'))
+print(get_str_current_time_number())
 # 密钥
 # my_secret = 'your_secure_secret_key'
 #

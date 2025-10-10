@@ -327,3 +327,165 @@ if __name__ == '__main__':
                 print(f"✅ 编码成功: {result}")
             else:
                 print(f"❌ 编码失败 [错误码 {result['code']}]: {result['message']}")
+
+import bcrypt
+import re
+from getpass import getpass
+
+
+class PasswordUtils:
+    """
+    密码哈希加密与验证工具类
+    使用bcrypt算法进行安全的密码哈希处理
+    """
+
+    # 错误码定义
+    ERROR_CODES = {
+        "INVALID_PASSWORD_FORMAT": 3001,
+        "HASHING_ERROR": 3002,
+        "VERIFICATION_ERROR": 3003
+    }
+
+    @staticmethod
+    def hash_password(password: str) -> tuple:
+        """
+        密码哈希加密函数
+        :param password: 原始密码字符串
+        :return: (status, result)
+                成功: ("SUCCESS", 哈希后的密码字符串)
+                失败: ("ERROR", 错误信息字典)
+        """
+        try:
+            # 验证密码格式
+            if not PasswordUtils._is_valid_password(password):
+                return ("ERROR", {
+                    "code": PasswordUtils.ERROR_CODES["INVALID_PASSWORD_FORMAT"],
+                    "message": "密码必须包含大小写字母、数字和特殊字符，长度8-64位"
+                })
+
+            # 生成盐值并哈希密码
+            salt = bcrypt.gensalt()
+            hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+            return ("SUCCESS", hashed.decode('utf-8'))
+
+        except Exception as e:
+            return ("ERROR", {
+                "code": PasswordUtils.ERROR_CODES["HASHING_ERROR"],
+                "message": f"密码哈希失败: {str(e)}",
+                "exception": str(e)
+            })
+
+    @staticmethod
+    def verify_password(password: str, hashed_password: str) -> tuple:
+        """
+        密码验证函数
+        :param password: 待验证的原始密码
+        :param hashed_password: 存储的哈希密码
+        :return: (status, result)
+                成功: ("SUCCESS", 验证结果布尔值)
+                失败: ("ERROR", 错误信息字典)
+        """
+        try:
+            # 验证密码格式
+            if not PasswordUtils._is_valid_password(password):
+                return ("ERROR", {
+                    "code": PasswordUtils.ERROR_CODES["INVALID_PASSWORD_FORMAT"],
+                    "message": "密码必须包含大小写字母、数字和特殊字符，长度8-64位"
+                })
+
+            # 验证密码是否匹配
+            is_valid = bcrypt.checkpw(
+                password.encode('utf-8'),
+                hashed_password.encode('utf-8')
+            )
+            return ("SUCCESS", is_valid)
+
+        except Exception as e:
+            return ("ERROR", {
+                "code": PasswordUtils.ERROR_CODES["VERIFICATION_ERROR"],
+                "message": f"密码验证失败: {str(e)}",
+                "exception": str(e)
+            })
+
+    @staticmethod
+    def _is_valid_password(password: str) -> bool:
+        """
+        验证密码复杂度
+        :param password: 密码字符串
+        :return: 是否符合复杂度要求
+        """
+        if len(password) < 8 or len(password) > 64:
+            return False
+
+        # 检查是否包含大小写字母、数字和特殊字符
+        has_upper = any(char.isupper() for char in password)
+        has_lower = any(char.islower() for char in password)
+        has_digit = any(char.isdigit() for char in password)
+        has_special = any(not char.isalnum() for char in password)
+
+        return has_upper and has_lower and has_digit and has_special
+
+
+# 测试用例
+if __name__ == '__main__':
+    print("密码哈希与验证测试")
+    print("=" * 40)
+
+    # 测试用例数据
+    test_passwords = [
+        "ValidPass1!",  # 有效密码
+        "weak",  # 太短
+        "no_upper1!",  # 缺少大写
+        "NO_LOWER1!",  # 缺少小写
+        "NoDigit!",  # 缺少数字
+        "NoSpecial123",  # 缺少特殊字符
+        "A" * 65,  # 太长
+    ]
+
+    # 测试哈希和验证
+    for pwd in test_passwords:
+        print(f"\n测试密码: {pwd}")
+
+        # 哈希测试
+        status, result = PasswordUtils.hash_password(pwd)
+        if status == "SUCCESS":
+            print(f"哈希成功: {result}")
+
+            # 验证测试
+            verify_status, verify_result = PasswordUtils.verify_password(pwd, result)
+            if verify_status == "SUCCESS":
+                print(f"验证结果: {'成功' if verify_result else '失败'}")
+            else:
+                print(f"验证错误: {verify_result['message']}")
+        else:
+            print(f"哈希错误: {result['message']}")
+
+    # 模拟用户注册和登录流程
+    print("\n模拟用户注册和登录流程")
+    print("-" * 40)
+
+    # 注册流程
+    while True:
+        reg_password = getpass("请设置密码(8-64位，包含大小写字母、数字和特殊字符): ")
+        status, hashed = PasswordUtils.hash_password(reg_password)
+
+        if status == "SUCCESS":
+            print("密码设置成功!")
+            stored_hash = hashed
+            break
+        else:
+            print(f"密码不符合要求: {hashed['message']}")
+
+    # 登录流程
+    while True:
+        login_password = getpass("请输入密码进行登录: ")
+        status, result = PasswordUtils.verify_password(login_password, stored_hash)
+
+        if status == "SUCCESS":
+            if result:
+                print("登录成功!")
+                break
+            else:
+                print("密码错误，请重试")
+        else:
+            print(f"验证错误: {result['message']}")
