@@ -115,8 +115,11 @@ if bot_initialized:
                 text="你点击了查看按钮"
             )
         elif call.data == "clock":
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                  text="你点击了打卡按钮")
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=f"打卡成功！时间：{call.message.date}"
+            )
         elif call.data == "Cancel":
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你取消了操作")
             bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
