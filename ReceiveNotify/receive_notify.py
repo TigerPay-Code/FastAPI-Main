@@ -180,7 +180,8 @@ async def get_users(
 
     cached_data = await redis_manager.get_json(cache_key)
     if cached_data:
-        users = json.loads(cached_data)
+        users = cached_data
+        logger.info(f"命中缓存: {cache_key}")
         total_users = await mysql_manager.fetchall("SELECT COUNT(*) AS total FROM users")
     else:
         total_users = await mysql_manager.fetchall("SELECT COUNT(*) AS total FROM users")
