@@ -177,31 +177,31 @@ async def send_telegram_message(message: str):
 
     if bot:
         try:
-            # 创建独立的MySQL连接
-            await mysql_manager.init_pool(
-                host=public_config.get(key="database.host", get_type=str),
-                port=public_config.get(key="database.port", get_type=int),
-                user=public_config.get(key="database.user", get_type=str),
-                password=public_config.get(key="database.password", get_type=str),
-                db=public_config.get(key="database.database", get_type=str),
-                charset=public_config.get(key="database.charset", get_type=str, default="utf8mb4")
-            )
-
-            # 初始化 Redis 连接池
-            await redis_manager.init_pool(
-                host=public_config.get(key="redis.host", get_type=str),
-                port=public_config.get(key="redis.port", get_type=int),
-                db=public_config.get(key="redis.db", get_type=int)
-            )
+            # # 创建独立的MySQL连接
+            # await mysql_manager.init_pool(
+            #     host=public_config.get(key="database.host", get_type=str),
+            #     port=public_config.get(key="database.port", get_type=int),
+            #     user=public_config.get(key="database.user", get_type=str),
+            #     password=public_config.get(key="database.password", get_type=str),
+            #     db=public_config.get(key="database.database", get_type=str),
+            #     charset=public_config.get(key="database.charset", get_type=str, default="utf8mb4")
+            # )
+            #
+            # # 初始化 Redis 连接池
+            # await redis_manager.init_pool(
+            #     host=public_config.get(key="redis.host", get_type=str),
+            #     port=public_config.get(key="redis.port", get_type=int),
+            #     db=public_config.get(key="redis.db", get_type=int)
+            # )
 
             cache_key = "telegram_admin_chat_ids"
             cached_data = await redis_manager.get_json(cache_key)
             if cached_data:
-                admin_chat_ids = json.loads(cached_data)
+                admin_chat_ids = cached_data
             else:
                 admin_chat_ids = await mysql_manager.fetchall("SELECT `chat_id` FROM `telegram_users` WHERE `status` = 1 AND `is_admin` = 1 ORDER BY `chat_id`")
 
-                await redis_manager.set(cache_key, admin_chat_ids, ex=60)
+                await redis_manager.set(cache_key, json.dumps(admin_chat_ids), ex=60)
 
             print(admin_chat_ids)
             for chat_id in admin_chat_ids:
