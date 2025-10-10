@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
-from fastapi import Request
+from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import time
 import json
+
+# ----------------- 数据库连接池模块导入 -----------------
+from DataBase.async_mysql import mysql_manager, get_mysql_conn
+
+# ----------------- Redis 连接池模块导入 -----------------
+from DataBase.async_redis import redis_manager, get_redis
+
 from Logger.logger_config import setup_logger
-
-
 import os
+
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 
@@ -29,6 +35,7 @@ def is_valid_ip(ip):
         return False
 
 
+# 获取真实IP的函数
 def get_real_ip(request):
     try:
         # 优先从X-Forwarded-For获取（可能包含多个代理IP）
@@ -55,12 +62,12 @@ def get_real_ip(request):
                     return real_ip
 
         # 所有获取方式失败时返回默认值
-        return "unknown"
+        return None
 
-    except Exception as e:
+    except Exception as err:
         # 记录异常但不中断程序
-        logger.error(f"获取真实IP失败: {str(e)}")
-        return "unknown"
+        logger.error(f"获取真实IP失败: {str(err)}")
+        return None
 
 
 class AccessMiddleware(BaseHTTPMiddleware):
@@ -74,22 +81,23 @@ class AccessMiddleware(BaseHTTPMiddleware):
         4. Telegram 推送封禁告警
         5. MySQL 安全审计记录
     """
+
     def __init__(
-        self,
-        app: ASGIApp,
-        db_pool: Pool,                # ✅ MySQL 异步连接池
-        allow_origins=None,
-        allow_credentials=True,
-        allow_methods=None,
-        allow_headers=None,
-        blacklist_key="blacklist:ip",
-        rate_key_prefix="reqcount:",
-        threshold=100,      # 阈值：在 time_window 秒内允许的最大请求数
-        time_window=60,     # 统计窗口时间
-        ban_time=600,       # 封禁时长
-        telegram_token=None,
-        admin_chat_id=None,
-        service_name="FastAPI Service",
+            self,
+            app: ASGIApp,
+            db_pool: Pool,  # ✅ MySQL 异步连接池
+            allow_origins=None,
+            allow_credentials=True,
+            allow_methods=None,
+            allow_headers=None,
+            blacklist_key="blacklist:ip",
+            rate_key_prefix="reqcount:",
+            threshold=100,  # 阈值：在 time_window 秒内允许的最大请求数
+            time_window=60,  # 统计窗口时间
+            ban_time=600,  # 封禁时长
+            telegram_token=None,
+            admin_chat_id=None,
+            service_name="FastAPI Service",
     ):
         super().__init__(app)
         self.db_pool = db_pool
@@ -107,11 +115,6 @@ class AccessMiddleware(BaseHTTPMiddleware):
         self.time_window = time_window
         self.ban_time = ban_time
 
-        # Telegram 告警
-        self.telegram_token = telegram_token
-        self.admin_chat_id = admin_chat_id
-        self.service_name = service_name
-        self.bot = Bot(token=self.telegram_token) if telegram_token and admin_chat_id else None
     async def load_blacklist(self):
         now = time.time()
         if now - self.last_refresh > self.refresh_interval:
@@ -175,7 +178,6 @@ class AccessMiddleware(BaseHTTPMiddleware):
         }
         print("📊 请求日志：", json.dumps(log_data, ensure_ascii=False))
 
-
         path = request.url.path
         method = request.method
 
@@ -220,4 +222,7 @@ class AccessMiddleware(BaseHTTPMiddleware):
 
         # 在响应头中加入耗时信息
         response.headers["X-Process-Time"] = str(duration) + "ms"
+        end_time = time.time()
+        logger.info(f"请求 {method} {path} 处理完成，耗时 {round((end_time - start_time) * 1000, 2)} ms")
+
         return response

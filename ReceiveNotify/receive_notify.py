@@ -155,17 +155,12 @@ templates = Jinja2Templates(directory="templates")
 notify.templates = templates
 
 # 添加中间件（如有需要）
-# notify.add_middleware(
-#     AccessMiddleware,
-#     allow_origins=["*"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+# notify.add_middleware(AccessMiddleware)
 
 # ============================================================
 # 工具函数
 # ============================================================
+# datetime 序列化函数
 def datetime_serializer(obj):
     """datetime → str"""
     if isinstance(obj, datetime):

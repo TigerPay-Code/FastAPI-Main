@@ -219,7 +219,6 @@ def initialize_config():
                 [
                     ['interval', '检查未处理支付通知的时间间隔（秒）', 1800],
 
-
                     ['job1.enable', '定时任务开关', True],
                     ['job1.name', '定时任务名称', '工作日早上九点开始晚上8点结束，每隔半小时检查一次未处理支付通知'],
                     ['job1.trigger', '定时任务触发器', 'interval'],  # interval, cron, date
