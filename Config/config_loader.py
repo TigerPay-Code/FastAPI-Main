@@ -163,6 +163,7 @@ def initialize_config():
                     ['version', '版本号', '1.0.00'],
                     ['debug', '调试模式', False],
                     ['python_version', 'Python版本', '3.10.12'],
+                    ['domain', '域名', 'king-sms.com'],
                     ['timezone', '本系统默认时区', 'Asia/Shanghai']
                 ]
             ],

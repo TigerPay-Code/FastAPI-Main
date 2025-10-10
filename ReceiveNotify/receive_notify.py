@@ -33,17 +33,15 @@ from PeriodicTask.pay_notify import start_periodic_task, stop_periodic_task
 # ----------------- Telegram 机器人模块导入 -----------------
 from Telegram.auto_bot import send_telegram_message, start_bot, stop_bot
 
-# ----------------- 数据库连接池模块导入 -----------------
-from DataBase.async_mysql import mysql_manager, get_mysql_conn
-
-# ----------------- Redis 连接池模块导入 -----------------
-from DataBase.async_redis import redis_manager, get_redis
+# ----------------- Mysql Redis 连接池模块导入 -----------------
+from DataBase.async_database import redis_manager, mysql_manager
 
 # ----------------- 工具模块导入 -----------------
 from Utils.handle_time import get_sec_int_timestamp
 
 # ----------------- 日志配置 -----------------
 from Logger.logger_config import setup_logger
+
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
 # -------------------------------------------
@@ -51,26 +49,6 @@ logger = setup_logger(log_name)
 # ----------------- HTTP 返回纯文本 -----------------
 success = Response(content="success", media_type="text/plain")
 ok = Response(content="ok", media_type="text/plain")
-
-# ----------------- MySQL 配置 -----------------
-mysql_cfg = {
-    "host": public_config.get(key="database.host", get_type=str),
-    "port": public_config.get(key="database.port", get_type=int),
-    "user": public_config.get(key="database.user", get_type=str),
-    "password": public_config.get(key="database.password", get_type=str),
-    "db": public_config.get(key="database.database", get_type=str),
-    "charset": public_config.get(key="database.charset", get_type=str)
-}
-# ----------------- Redis 配置 -----------------
-redis_url = (
-    f"redis://{public_config.get(key='redis.host', get_type=str)}:"
-    f"{public_config.get(key='redis.port', get_type=int)}/"
-    f"{public_config.get(key='redis.db', get_type=int)}"
-)
-redis_cfg = {
-    "url": redis_url,
-    "max_connections": 50,
-}
 
 
 # ============================================================
@@ -87,11 +65,22 @@ async def lifespan_manager(app: FastAPI):
 
         # 初始化数据库连接池
         logger.info("🗄️ 启动 MySQL 连接池...")
-        await mysql_manager.init_pool(**mysql_cfg)
+        await mysql_manager.init_pool(
+            host=public_config.get(key="database.host", get_type=str),
+            port=public_config.get(key="database.port", get_type=int),
+            user=public_config.get(key="database.user", get_type=str),
+            password=public_config.get(key="database.password", get_type=str),
+            db=public_config.get(key="database.database", get_type=str),
+            charset=public_config.get(key="database.charset", get_type=str, default="utf8mb4")
+        )
 
         # 初始化 Redis 连接池
         logger.info("🧠 启动 Redis 连接池...")
-        await redis_manager.init_pool(**redis_cfg)
+        await redis_manager.init_pool(
+            host=public_config.get(key="redis.host", get_type=str),
+            port=public_config.get(key="redis.port", get_type=int),
+            db=public_config.get(key="redis.db", get_type=int)
+        )
 
         # 启动 Telegram 机器人
         if public_config.get(key='telegram.enable', get_type=bool):
@@ -154,6 +143,7 @@ notify.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 notify.templates = templates
 
+
 # 添加中间件（如有需要）
 # notify.add_middleware(AccessMiddleware)
 
@@ -183,30 +173,22 @@ async def get_users(
         request: Request,
         page: int = Query(1, ge=1),
         per_page: int = Query(10, ge=5, le=100),
-        conn=Depends(get_mysql_conn),
-        redis=Depends(get_redis)
 ):
     offset = (page - 1) * per_page
+
     cache_key = f"users_list:page_{page}:per_page_{per_page}"
 
-    cached_data = await redis.get(cache_key)
+    cached_data = await redis_manager.get_json(cache_key)
     if cached_data:
         users = json.loads(cached_data)
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT COUNT(*) AS total FROM users")
-            total_users = (await cur.fetchone())["total"]
+        total_users = await mysql_manager.fetchall("SELECT COUNT(*) AS total FROM users")
     else:
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT COUNT(*) AS total FROM users")
-            total_users = (await cur.fetchone())["total"]
+        total_users = await mysql_manager.fetchall("SELECT COUNT(*) AS total FROM users")
+        users = await mysql_manager.fetchall(
+            "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
+            (per_page, offset))
 
-            await cur.execute(
-                "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
-                (per_page, offset)
-            )
-            users = await cur.fetchall()
-
-            await redis.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
+        await redis_manager.set(cache_key, json.dumps(users, default=datetime_serializer), ex=60)
 
     total_pages = int(ceil(total_users / per_page))
     pagination = {
@@ -238,7 +220,8 @@ async def handle_global_pay_in_notify(notify_in_data: Pay_RX_Notify_In_Data):
 
     try:
         # 时间戳验证
-        if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds", get_type=int, default=30):
+        if notify_in_data.timestamp > get_sec_int_timestamp() + public_config.get(key="order.delay_seconds",
+                                                                                  get_type=int, default=30):
             logger.warning(f"订单号 {notify_in_data.mchOrderNo} 时间戳异常，拒绝处理")
             return {"code": 1, "msg": "timestamp error"}
 
