@@ -87,13 +87,36 @@ if bot_initialized:
 
         bot.send_message(chat_id, "请选择一个需要查看的商户：", reply_markup=markup)
 
+if bot_initialized:
+    @bot.message_handler(commands=['clock'])
+    def handle_bot_click(message):
+        if not bot_initialized:
+            logger.error("Bot 未初始化，无法处理消息")
+            return
+
+        chat_id = message.chat.id
+        markup = InlineKeyboardMarkup()
+
+        markup.row(InlineKeyboardButton(text='打卡', callback_data='clock'))
+
+        # 第四行：一个按钮（取消）
+        markup.row(InlineKeyboardButton(text='取消', callback_data='Cancel'))
+
+        bot.send_message(chat_id, "请选择一个需要查看的商户：", reply_markup=markup)
+
 # 处理按钮点击事件
 if bot_initialized:
     @bot.callback_query_handler(func=lambda call: True)
     def handle_callback_query(call):
         if call.data == "View":
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text="你点击了查看按钮"
+            )
+        elif call.data == "clock":
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                  text="你点击了查看按钮")
+                                  text="你点击了打卡按钮")
         elif call.data == "Cancel":
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你取消了操作")
             bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
@@ -136,13 +159,10 @@ def start_bot():
     # 删除旧命令
     bot.delete_my_commands(scope=None, language_code=None)
 
-    # 注册命令处理器
-    # bot.register_message_handler(get_chat_id_handler, commands=["id"])
-    # bot.register_message_handler(handle_bot_click, commands=["test"])
-
     commands_list = [
         ("id", "查询聊天ID"),
-        ("test", "测试 InlineKeyboardMarkup")
+        ("test", "测试内联按钮"),
+        ("clock", "打卡")
     ]
 
     com_set = []
@@ -163,7 +183,6 @@ def stop_bot():
 if bot_initialized:
     @bot.message_handler(commands=['id'])
     def gei_chat_id(message):
-        logger.info(message)
         if not bot_initialized:
             logger.error("Bot 未初始化，无法处理消息")
             return
@@ -182,11 +201,10 @@ async def send_telegram_message(message: str):
             if cached_data:
                 admin_chat_ids = cached_data
             else:
-                admin_chat_ids = await mysql_manager.fetchall("SELECT `chat_id` FROM `telegram_users` WHERE `status` = 1 AND `is_admin` = 1 ORDER BY `chat_id`")
-
+                admin_chat_ids = await mysql_manager.fetchall(
+                    "SELECT `chat_id` FROM `telegram_users` WHERE `status` = 1 AND `is_admin` = 1 ORDER BY `chat_id`")
                 await redis_manager.set(cache_key, json.dumps(admin_chat_ids), ex=600)
 
-            print(admin_chat_ids)
             for chat_id in admin_chat_ids:
                 try:
                     bot.send_message(chat_id=str(chat_id['chat_id']), text=message)
