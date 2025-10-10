@@ -10,7 +10,6 @@ import os
 
 import re
 
-import aiomysql
 import telebot  # pip3 install --upgrade pyTelegramBotAPI
 from telebot import types
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
@@ -24,6 +23,7 @@ from Config.config_loader import public_config
 
 # 引用日志模块
 from Logger.logger_config import setup_logger
+from Utils.handle_time import get_local_time_str
 
 log_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 logger = setup_logger(log_name)
@@ -118,7 +118,7 @@ if bot_initialized:
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=f"打卡成功！时间：{call.message.date}"
+                text=f"打卡成功！时间：{get_local_time_str()}"
             )
         elif call.data == "Cancel":
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="你取消了操作")
