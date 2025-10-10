@@ -85,7 +85,7 @@ if bot_initialized:
         # 第四行：一个按钮（取消）
         markup.row(InlineKeyboardButton(text='取消', callback_data='Cancel'))
 
-        bot.send_message(chat_id, "请选择一个需要查看的商户：", reply_markup=markup)
+        bot.send_message(chat_id, "这是测试内联按钮：", reply_markup=markup)
 
 if bot_initialized:
     @bot.message_handler(commands=['clock'])
@@ -102,7 +102,7 @@ if bot_initialized:
         # 第四行：一个按钮（取消）
         markup.row(InlineKeyboardButton(text='取消', callback_data='Cancel'))
 
-        bot.send_message(chat_id, "请选择一个需要查看的商户：", reply_markup=markup)
+        bot.send_message(chat_id, "确认是否要打卡？", reply_markup=markup)
 
 # 处理按钮点击事件
 if bot_initialized:
