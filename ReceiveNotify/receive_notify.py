@@ -179,12 +179,15 @@ async def get_users(
     cache_key = f"users_list:page_{page}:per_page_{per_page}"
 
     cached_data = await redis_manager.get_json(cache_key)
+
     if cached_data:
         users = cached_data
         logger.info(f"命中缓存: {cache_key}")
-        total_users = await mysql_manager.fetchall("SELECT COUNT(*) AS total FROM users")
+        total_result = await mysql_manager.fetchone("SELECT COUNT(*) AS total FROM users")
+        total_users = total_result['total'] if total_result else 0
     else:
-        total_users = await mysql_manager.fetchall("SELECT COUNT(*) AS total FROM users")
+        total_result = await mysql_manager.fetchone("SELECT COUNT(*) AS total FROM users")
+        total_users = total_result['total'] if total_result else 0
         users = await mysql_manager.fetchall(
             "SELECT id, username, email, created_at FROM users ORDER BY id DESC LIMIT %s OFFSET %s",
             (per_page, offset))
