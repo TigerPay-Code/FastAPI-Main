@@ -205,7 +205,7 @@ async def send_telegram_message(message: str):
 
             for chat_id in admin_chat_ids:
                 try:
-                    bot.send_message(chat_id=str(chat_id['chat_id']), text=message)
+                    bot.send_message(chat_id=str(chat_id.get("chat_id")), text=message)
                     logger.info(f"发送消息[{message}]到 chat_id [{chat_id}] 成功")
                 except Exception as e:
                     logger.error(f"发送消息到 chat_id {chat_id} 失败: {e}")
