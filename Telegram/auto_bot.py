@@ -157,7 +157,9 @@ def run_bot():
                 "edited_message",  # 处理编辑过的消息
                 "channel_post",  # 处理频道帖子
                 "edited_channel_post"  # 处理编辑过的频道帖子
-            ]
+            ],
+            none_stop=True,  # 发生错误时继续运行
+            restart_on_change=True
         )
     except KeyboardInterrupt:
         logger.error("收到终止信号，正在优雅关闭机器人...")
