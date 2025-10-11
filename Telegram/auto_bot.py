@@ -53,7 +53,7 @@ def get_chat_id_handler(message):
         return
 
     chat_id = message.chat.id
-    bot.send_message(chat_id, f"你的聊天ID是: {chat_id}")
+    bot.reply_to(chat_id, f"你的聊天ID是: {chat_id}")
 
 
 if bot_initialized:
@@ -126,29 +126,47 @@ if bot_initialized:
         else:
             bot.answer_callback_query(callback_query_id=call.id, text="未知操作")
 
+if bot_initialized:
+    @bot.message_handler(content_types=["photo"])
+    def handle_image(message):
+        if not bot_initialized:
+            logger.error("Bot 未初始化，无法处理消息")
+            return
+
+        bot.reply_to(message, "收到图片！")
+
 
 def run_bot():
     if not bot_initialized:
         logger.error("Bot 未初始化，无法启动轮询")
         return
 
-    bot.infinity_polling(
-        allowed_updates=[  # 明确指定需要处理的更新类型
-            "message",  # 处理消息
-            "callback_query",  # 处理回调查询（按钮点击）
-            "inline_query",  # 处理内联查询（搜索框）
-            "chosen_inline_result",  # 处理选择的内联结果
-            "shipping_query",  # 处理货运查询
-            "pre_checkout_query",  # 处理预结账查询
-            "poll",  # 处理投票
-            "poll_answer",  # 处理投票答案
-            "my_chat_member",  # 添加成员状态更新，用于检测机器人被添加/删除
-            "chat_member",  # 添加群组成员变动监控
-            "edited_message",  # 处理编辑过的消息
-            "channel_post",  # 处理频道帖子
-            "edited_channel_post"  # 处理编辑过的频道帖子
-        ]
-    )
+    try:
+        bot.infinity_polling(
+            allowed_updates=[  # 明确指定需要处理的更新类型
+                "message",  # 处理消息
+                "callback_query",  # 处理回调查询（按钮点击）
+                "inline_query",  # 处理内联查询（搜索框）
+                "chosen_inline_result",  # 处理选择的内联结果
+                "shipping_query",  # 处理货运查询
+                "pre_checkout_query",  # 处理预结账查询
+                "poll",  # 处理投票
+                "poll_answer",  # 处理投票答案
+                "my_chat_member",  # 添加成员状态更新，用于检测机器人被添加/删除
+                "chat_member",  # 添加群组成员变动监控
+                "edited_message",  # 处理编辑过的消息
+                "channel_post",  # 处理频道帖子
+                "edited_channel_post"  # 处理编辑过的频道帖子
+            ]
+        )
+    except KeyboardInterrupt:
+        logger.error("收到终止信号，正在优雅关闭机器人...")
+    except telebot.apihelper.ApiException as api_error:
+        logger.error(f"Telegram API 错误: {api_error}")
+    except Exception as e:
+        logger.error(f"机器人运行时发生错误: {str(e)}")
+    finally:
+        logger.error("机器人已停止运行")
 
 
 def start_bot():
